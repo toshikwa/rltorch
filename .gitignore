@@ -1,0 +1,6 @@
+logs/
+__pycache__/
+.vscode/
+*.egg-info/
+*.log
+*.out
