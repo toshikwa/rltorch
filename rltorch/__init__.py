@@ -1,1 +1,1 @@
-from rltorch import memory
+from . import memory

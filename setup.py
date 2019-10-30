@@ -12,7 +12,7 @@ from setuptools import find_packages, setup, Command
 
 NAME = 'rltorch'
 DESCRIPTION = 'Utilities for reinforcement learning in PyTorch.'
-URL = 'https://github.com/ku2482/rl-utils'
+URL = 'https://github.com/ku2482/rltorch'
 EMAIL = 'watanabe.toshiki@outlook.jp'
 AUTHOR = 'Toshiki Watanabe'
 REQUIRES_PYTHON = '>=3.6.0'
@@ -93,7 +93,7 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=find_packages('exclude=["tests", "*.tests", "*.tests.*", "tests.*"]'),
+    packages=['rltorch', 'rltorch.memory'],
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
 
