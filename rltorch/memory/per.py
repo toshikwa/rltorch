@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from torch.utils.data.sampler import WeightedRandomSampler
 
 from .multi_step import MultiStepMemory
@@ -32,19 +33,21 @@ class PrioritizedMemory(MultiStepMemory):
             self.buff.reset()
 
     def update_priority(self, indices, errors):
-        self.priority[indices] = self.calc_priority(errors)
+        self.priority[indices] = np.reshape(
+            self.calc_priority(errors), (-1, 1))
 
     def calc_priority(self, error):
         return (np.abs(error) + self.epsilon) ** self.alpha
 
     def sample(self, batch_size):
         self.beta = min(1. - self.epsilon, self.beta + self.beta_annealing)
-        sampler = WeightedRandomSampler(self.priority[:self._n], batch_size)
+        sampler = WeightedRandomSampler(self.priority[:self._n, 0], batch_size)
         indices = list(sampler)
         batch = self._sample(indices)
 
         p = self.priority[indices] / np.sum(self.priority[:self._n])
         weights = (self._n * p) ** -self.beta
         weights /= np.max(weights)
+        weights = torch.FloatTensor(weights).to(self.device)
 
         return batch, indices, weights
