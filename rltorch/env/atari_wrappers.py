@@ -205,8 +205,16 @@ class FrameStackPyTorch(gym.Wrapper):
         self.n_frames = n_frames
         self.frames = deque([], maxlen=n_frames)
         shp = env.observation_space.shape
+
+        if self.observation_space == np.uint8:
+            low = 0
+            high = 255
+        else:
+            low = 0.0
+            high = 1.0
+
         self.observation_space = spaces.Box(
-            low=0, high=255, shape=(shp[0] * n_frames, shp[1], shp[2]),
+            low=low, high=high, shape=(shp[0] * n_frames, shp[1], shp[2]),
             dtype=env.observation_space.dtype)
 
     def reset(self):
@@ -301,10 +309,10 @@ def wrap_deepmind_pytorch(env, episode_life=True, clip_rewards=True,
     env = WarpFramePyTorch(env)
     if clip_rewards:
         env = ClipRewardEnv(env)
-    if frame_stack:
-        env = FrameStackPyTorch(env, 4)
     if scale:
         env = ScaledFloatFrame(env)
+    if frame_stack:
+        env = FrameStackPyTorch(env, 4)
     return env
 
 
