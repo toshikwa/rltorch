@@ -13,19 +13,7 @@ class Memory:
         self.is_image = is_image
         self.state_type = np.uint8 if self.is_image else np.float32
 
-        self._n = 0
-        self._p = 0
-
-        self.states = np.zeros(
-            (self.capacity, *state_shape), dtype=self.state_type)
-        self.actions = np.zeros(
-            (self.capacity, *action_shape), dtype=np.float32)
-        self.rewards = np.zeros(
-            (self.capacity, 1), dtype=np.float32)
-        self.next_states = np.zeros(
-            (self.capacity, *state_shape), dtype=self.state_type)
-        self.dones = np.zeros(
-            (self.capacity, 1), dtype=np.float32)
+        self.reset()
 
     def append(self, state, action, reward, next_state, done):
         self._append(state, action, reward, next_state, done)
@@ -66,3 +54,52 @@ class Memory:
 
     def __len__(self):
         return self._n
+
+    def reset(self):
+        self._n = 0
+        self._p = 0
+
+        self.states = np.zeros(
+            (self.capacity, *self.state_shape), dtype=self.state_type)
+        self.actions = np.zeros(
+            (self.capacity, *self.action_shape), dtype=np.float32)
+        self.rewards = np.zeros(
+            (self.capacity, 1), dtype=np.float32)
+        self.next_states = np.zeros(
+            (self.capacity, *self.state_shape), dtype=self.state_type)
+        self.dones = np.zeros(
+            (self.capacity, 1), dtype=np.float32)
+
+    def get(self):
+        valid = slice(0, self._n)
+        return (
+            self.states[valid], self.actions[valid], self.rewards[valid],
+            self.next_states[valid], self.dones[valid])
+
+    def load_memory(self, batch):
+        num_data = len(batch[0])
+
+        if self._p + num_data <= self.capacity:
+            self._insert(
+                slice(self._p, self._p+num_data), batch,
+                slice(0, num_data))
+        else:
+            mid_index = self.capacity-self._p
+            end_index = num_data - mid_index
+            self._insert(
+                slice(self._p, self.capacity), batch,
+                slice(0, mid_index))
+            self._insert(
+                slice(0, end_index), batch,
+                slice(mid_index, num_data))
+
+        self._n = min(self._n + num_data, self.capacity)
+        self._p = (self._p + num_data) % self.capacity
+
+    def _insert(self, mem_indices, batch, batch_indices):
+        states, actions, rewards, next_states, dones = batch
+        self.states[mem_indices] = states[batch_indices]
+        self.actions[mem_indices] = actions[batch_indices]
+        self.rewards[mem_indices] = rewards[batch_indices]
+        self.next_states[mem_indices] = next_states[batch_indices]
+        self.dones[mem_indices] = dones[batch_indices]

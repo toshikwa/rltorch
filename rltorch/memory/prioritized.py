@@ -17,8 +17,6 @@ class PrioritizedMemory(MultiStepMemory):
         self.beta = beta
         self.beta_annealing = beta_annealing
         self.epsilon = epsilon
-        self.priority = np.zeros(
-            (self.capacity, 1), dtype=np.float32)
 
     def append(self, state, action, reward, next_state, done, error,
                episode_done=False):
@@ -26,14 +24,14 @@ class PrioritizedMemory(MultiStepMemory):
 
         if len(self.buff) == self.multi_step:
             state, action, reward = self.buff.get(self.gamma)
-            self.priority[self._p] = self.calc_priority(error)
+            self.priorities[self._p] = self.calc_priority(error)
             self._append(state, action, reward, next_state, done)
 
         if episode_done or done:
             self.buff.reset()
 
     def update_priority(self, indices, errors):
-        self.priority[indices] = np.reshape(
+        self.priorities[indices] = np.reshape(
             self.calc_priority(errors), (-1, 1))
 
     def calc_priority(self, error):
@@ -41,13 +39,34 @@ class PrioritizedMemory(MultiStepMemory):
 
     def sample(self, batch_size):
         self.beta = min(1. - self.epsilon, self.beta + self.beta_annealing)
-        sampler = WeightedRandomSampler(self.priority[:self._n, 0], batch_size)
+        sampler = WeightedRandomSampler(
+            self.priorities[:self._n, 0], batch_size)
         indices = list(sampler)
         batch = self._sample(indices)
 
-        p = self.priority[indices] / np.sum(self.priority[:self._n])
+        p = self.priorities[indices] / np.sum(self.priorities[:self._n])
         weights = (self._n * p) ** -self.beta
         weights /= np.max(weights)
         weights = torch.FloatTensor(weights).to(self.device)
 
         return batch, indices, weights
+
+    def reset(self):
+        super(PrioritizedMemory, self).reset()
+        self.priorities = np.zeros(
+            (self.capacity, 1), dtype=np.float32)
+
+    def get(self):
+        valid = slice(0, self._n)
+        return (
+            self.states[valid], self.actions[valid], self.rewards[valid],
+            self.next_states[valid], self.dones[valid], self.priorities[valid])
+
+    def _insert(self, mem_indices, batch, batch_indices):
+        states, actions, rewards, next_states, dones, priorities = batch
+        self.states[mem_indices] = states[batch_indices]
+        self.actions[mem_indices] = actions[batch_indices]
+        self.rewards[mem_indices] = rewards[batch_indices]
+        self.next_states[mem_indices] = next_states[batch_indices]
+        self.dones[mem_indices] = dones[batch_indices]
+        self.priorities[mem_indices] = priorities[batch_indices]
