@@ -93,7 +93,7 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=['rltorch', 'rltorch.memory'],
+    packages=['rltorch', 'rltorch.memory', 'rltorch.env'],
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
 
