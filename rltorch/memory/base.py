@@ -19,6 +19,9 @@ class Memory:
         self._append(state, action, reward, next_state, done)
 
     def _append(self, state, action, reward, next_state, done):
+        state = np.array(state, dtype=np.float32)
+        next_state = np.array(next_state, dtype=np.float32)
+
         if self.is_image:
             state = (state*255).astype(np.uint8)
             next_state = (next_state*255).astype(np.uint8)
