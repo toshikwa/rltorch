@@ -3,10 +3,26 @@ import datetime
 import argparse
 import torch.multiprocessing as mp
 
-from actor import actor_process
-from learner import learner_process
+from rltorch.agent import ApexActor, ApexLearner
 
 mp.set_start_method('spawn', force=True)
+
+
+def actor_process(env_id, log_dir, shared_memory, shared_wights,
+                  actor_id, num_actors, cuda=True, seed=0):
+
+    actor = ApexActor(
+        env_id, log_dir, shared_memory, shared_wights, actor_id,
+        num_actors, cuda=cuda, seed=seed)
+    actor.run()
+
+
+def learner_process(env_id, log_dir, shared_memory, shared_wights,
+                    cuda=True, seed=0):
+
+    actor = ApexLearner(
+        env_id, log_dir, shared_memory, shared_wights, cuda=cuda, seed=seed)
+    actor.run()
 
 
 def run():
@@ -15,24 +31,27 @@ def run():
     parser = argparse.ArgumentParser()
     parser.add_argument('--env_id', type=str, default='MsPacmanNoFrameskip-v4')
     parser.add_argument('-n', '--num_actors', type=int, default=4)
+    parser.add_argument('--cuda', action='store_true')
     parser.add_argument('--seed', type=int, default=0)
     args = parser.parse_args()
 
     log_dir = os.path.join(
         'logs', args.env_id,
         datetime.datetime.now().strftime("%Y%m%d-%H%M"))
-    memory_queue = mp.Queue(100)
+
+    shared_memory = mp.Queue(100)
     mp_manager = mp.Manager()
-    param_dict = mp_manager.dict()
+    shared_wights = mp_manager.dict()
 
     learner_args = (
-        args.env_id, log_dir, memory_queue, param_dict, args.seed)
+        args.env_id, log_dir, shared_memory, shared_wights, args.cuda,
+        args.seed)
     processes = [mp.Process(target=learner_process, args=learner_args)]
 
     for actor_id in range(args.num_actors):
         actor_args = (
-            args.env_id, log_dir, memory_queue, param_dict,
-            actor_id, args.num_actors, args.seed)
+            args.env_id, log_dir, shared_memory, shared_wights, actor_id,
+            args.num_actors, args.cuda, args.seed,)
         processes.append(
             mp.Process(target=actor_process, args=actor_args))
 
