@@ -134,7 +134,9 @@ class Learner:
             self.target_net.load_state_dict(self.net.state_dict())
 
     def learn(self):
-        total_loss = 0
+        total_loss = 0.
+        mean_q = 0.
+
         for epoch in range(self.epochs):
             batch, indices, weights = \
                 self.memory.sample(self.batch_size)
@@ -149,10 +151,14 @@ class Learner:
             self.memory.update_priority(indices, errors)
 
             total_loss += loss.detach().item()
+            mean_q += curr_q.detach().mean().item()
 
         if self.num_steps % self.log_save_interval == 0:
             self.writer.add_scalar(
                 "loss/learner", total_loss / self.epochs,
+                self.num_steps)
+            self.writer.add_scalar(
+                "stats/mean_Q", mean_q / self.epochs,
                 self.num_steps)
             print(
                 f"Learer \t loss: {total_loss / self.epochs:< 8.3f} "
