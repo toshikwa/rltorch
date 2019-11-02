@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-from .base import weights_init_xavier, Flatten
+from .base import weights_init_xavier, Flatten, BaseNetwork
 
 
 def create_conv_base(input_channels):
@@ -15,7 +15,7 @@ def create_conv_base(input_channels):
     )
 
 
-class ConvQNetwork(nn.Module):
+class ConvQNetwork(BaseNetwork):
     def __init__(self, input_channels, num_actions):
         super(ConvQNetwork, self).__init__()
 

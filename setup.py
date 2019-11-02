@@ -7,7 +7,7 @@ import os
 import sys
 from shutil import rmtree
 
-from setuptools import find_packages, setup, Command
+from setuptools import setup, Command
 
 
 NAME = 'rltorch'
@@ -93,7 +93,8 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=['rltorch', 'rltorch.memory', 'rltorch.env', 'rltorch.q_functions'],
+    packages=[
+        'rltorch', 'rltorch.memory', 'rltorch.env', 'rltorch.q_function'],
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
 
