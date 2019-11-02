@@ -6,20 +6,19 @@ from torch.utils.tensorboard import SummaryWriter
 
 from .base import ApexAgent
 from ...q_function.conv import ConvQNetwork
-from ...env import make_pytorch_env
 from ...memory import PrioritizedMemory
 
 
 class ApexLearner(ApexAgent):
 
-    def __init__(self, env_id, log_dir, shared_memory, shared_weights,
+    def __init__(self, env, log_dir, shared_memory, shared_weights,
                  batch_size=64, lr=0.00025/4, memory_size=4e5, gamma=0.99,
                  multi_step=3, alpha=0.4, num_epochs=3, start_steps=1000,
                  beta=0.6, beta_annealing=0.0, log_interval=10,
                  memory_load_interval=5, model_save_interval=5,
                  target_update_interval=100, eval_interval=1000, cuda=True,
                  seed=0):
-        self.env = make_pytorch_env(env_id)
+        self.env = env
         torch.manual_seed(seed)
         np.random.seed(seed)
         self.env.seed(seed)

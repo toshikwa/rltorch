@@ -4,6 +4,7 @@ import argparse
 import torch.multiprocessing as mp
 
 from rltorch.agent import ApexActor, ApexLearner
+from rltorch.env import make_pytorch_env
 
 mp.set_start_method('spawn', force=True)
 
@@ -12,8 +13,8 @@ def actor_process(env_id, log_dir, shared_memory, shared_wights,
                   actor_id, num_actors, cuda=True, seed=0):
 
     actor = ApexActor(
-        env_id, log_dir, shared_memory, shared_wights, actor_id,
-        num_actors, cuda=cuda, seed=seed)
+        make_pytorch_env(env_id), log_dir, shared_memory, shared_wights,
+        actor_id, num_actors, cuda=cuda, seed=seed)
     actor.run()
 
 
@@ -21,7 +22,8 @@ def learner_process(env_id, log_dir, shared_memory, shared_wights,
                     cuda=True, seed=0):
 
     actor = ApexLearner(
-        env_id, log_dir, shared_memory, shared_wights, cuda=cuda, seed=seed)
+        make_pytorch_env(env_id), log_dir, shared_memory, shared_wights,
+        cuda=cuda, seed=seed)
     actor.run()
 
 

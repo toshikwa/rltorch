@@ -4,7 +4,6 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from .base import ApexAgent
-from ...env.atari_wrappers import make_pytorch_env
 from ...memory import PrioritizedMemory
 from ...q_function import ConvQNetwork
 
@@ -12,14 +11,14 @@ from ...q_function import ConvQNetwork
 class ApexActor(ApexAgent):
     space_size = 55
 
-    def __init__(self, env_id, log_dir, shared_memory, shared_weights,
+    def __init__(self, env, log_dir, shared_memory, shared_weights,
                  actor_id, num_actors, memory_size=1e4, gamma=0.99,
                  multi_step=3, alpha=0.4, beta=0.6, beta_annealing=0.0,
                  log_interval=10, memory_save_interval=5,
                  model_load_interval=5, cuda=True, seed=0):
 
         self.actor_id = actor_id
-        self.env = make_pytorch_env(env_id)
+        self.env = env
         torch.manual_seed(seed)
         np.random.seed(seed)
         self.env.seed(seed)
