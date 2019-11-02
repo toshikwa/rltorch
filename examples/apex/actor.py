@@ -22,13 +22,13 @@ class Actor:
 
     def __init__(self, env_id, log_dir, memory_queue, param_dict, actor_id,
                  num_actors, seed):
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu")
         self.env = make_pytorch_env(env_id)
-
         torch.manual_seed(seed)
         np.random.seed(seed)
         self.env.seed(seed)
+
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
 
         self.net = ConvQNetwork(
             self.env.observation_space.shape[0],

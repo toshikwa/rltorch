@@ -20,12 +20,13 @@ def learner_process(env_id, log_dir, memory_queue, param_dict, seed):
 class Learner:
 
     def __init__(self, env_id, log_dir, memory_queue, param_dict, seed):
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu")
         self.env = make_pytorch_env(env_id)
         torch.manual_seed(seed)
         np.random.seed(seed)
         self.env.seed(seed)
+
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
 
         self.net = ConvQNetwork(
             self.env.observation_space.shape[0],
@@ -65,7 +66,10 @@ class Learner:
         self._save_params()
 
         self.log_dir = log_dir
+        self.model_path = os.path.join(log_dir, 'model')
         self.summary_path = os.path.join(log_dir, 'summary', 'leaner')
+        if not os.path.exists(self.model_path):
+            os.makedirs(self.model_path)
         if not os.path.exists(self.summary_path):
             os.makedirs(self.summary_path)
         self.writer = SummaryWriter(log_dir=self.summary_path)
@@ -124,6 +128,7 @@ class Learner:
 
         if self.num_steps % self.model_save_interval == 0:
             self._save_params()
+            self._save_models()
 
         if self.num_steps % self.target_update_interval == 0:
             self.target_net.load_state_dict(self.net.state_dict())
@@ -173,6 +178,12 @@ class Learner:
             self.net).cpu().state_dict()
         self.param_dict['target_net'] = deepcopy(
             self.target_net).cpu().state_dict()
+
+    def _save_models(self):
+        self.net.save(
+            os.path.join(self.model_path, 'net.pth'))
+        self.target_net.save(
+            os.path.join(self.model_path, 'target_net.pth'))
 
     def _load_memory(self):
         while not self.memory_queue.empty():
