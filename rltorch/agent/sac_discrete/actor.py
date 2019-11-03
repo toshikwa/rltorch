@@ -4,9 +4,9 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from .base import SacDiscreteAgent
-from ...memory import Memory, MultiStepMemory, PrioritizedMemory
-from ...policy import ConvCategoricalPolicy
-from ...q_function import TwinedDiscreteConvQNetwork
+from rltorch.memory import Memory, MultiStepMemory, PrioritizedMemory
+from rltorch.policy import ConvCategoricalPolicy
+from rltorch.q_function import TwinedDiscreteConvQNetwork
 
 
 class SacDiscreteActor(SacDiscreteAgent):

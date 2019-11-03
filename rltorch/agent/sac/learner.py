@@ -6,9 +6,9 @@ from torch.optim import Adam
 from torch.utils.tensorboard import SummaryWriter
 
 from .base import SacAgent
-from ...memory import Memory, MultiStepMemory, PrioritizedMemory
-from ...policy import LinearGaussianPolicy
-from ...q_function import TwinnedContinuousLinearQNetwork
+from rltorch.memory import Memory, MultiStepMemory, PrioritizedMemory
+from rltorch.policy import LinearGaussianPolicy
+from rltorch.q_function import TwinnedContinuousLinearQNetwork
 
 
 class SacLearner(SacAgent):

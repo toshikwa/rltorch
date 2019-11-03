@@ -1,4 +1,5 @@
-from ..network import BaseNetwork, create_dqn_base, create_linear_network
+from rltorch.network import BaseNetwork, create_dqn_base,\
+    create_linear_network
 
 
 class DiscreteConvQNetwork(BaseNetwork):

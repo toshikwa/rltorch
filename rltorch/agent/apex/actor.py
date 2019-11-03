@@ -4,8 +4,8 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from .base import ApexAgent
-from ...memory import PrioritizedMemory
-from ...q_function import DiscreteConvQNetwork
+from rltorch.memory import PrioritizedMemory
+from rltorch.q_function import DiscreteConvQNetwork
 
 
 class ApexActor(ApexAgent):

@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from ..base import BaseAgent
+from rltorch.agent import BaseAgent
 
 
 class ApexAgent(BaseAgent):

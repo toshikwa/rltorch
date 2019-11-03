@@ -2,10 +2,10 @@ from copy import deepcopy
 import torch
 from torch import nn
 
-from ..sac.base import SacAgent
+from rltorch.agent import BaseAgent
 
 
-class SacDiscreteAgent(SacAgent):
+class SacDiscreteAgent(BaseAgent):
 
     def __init__(self):
         super(SacDiscreteAgent, self).__init__()

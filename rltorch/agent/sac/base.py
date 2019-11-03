@@ -2,7 +2,7 @@ from copy import deepcopy
 import torch
 from torch import nn
 
-from ..base import BaseAgent
+from rltorch.agent import BaseAgent
 
 
 class SacAgent(BaseAgent):

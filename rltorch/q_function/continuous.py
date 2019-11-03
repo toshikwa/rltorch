@@ -1,6 +1,6 @@
 import torch
 
-from ..network import BaseNetwork, create_linear_network
+from rltorch.network import BaseNetwork, create_linear_network
 
 
 class ContinuousLinearQNetwork(BaseNetwork):

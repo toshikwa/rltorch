@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.distributions import Categorical
 
-from ..network import BaseNetwork, create_linear_network, create_dqn_base
+from rltorch.network import BaseNetwork, create_linear_network, create_dqn_base
 
 
 class ConvCategoricalPolicy(BaseNetwork):

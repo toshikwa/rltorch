@@ -1,7 +1,7 @@
 import torch
 from torch.distributions import Normal
 
-from ..network import BaseNetwork, create_linear_network
+from rltorch.network import BaseNetwork, create_linear_network
 
 
 class LinearGaussianPolicy(BaseNetwork):

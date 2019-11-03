@@ -5,8 +5,8 @@ import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 
 from .base import ApexAgent
-from ...q_function import DiscreteConvQNetwork
-from ...memory import PrioritizedMemory
+from rltorch.q_function import DiscreteConvQNetwork
+from rltorch.memory import PrioritizedMemory
 
 
 class ApexLearner(ApexAgent):
