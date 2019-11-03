@@ -1,1 +1,3 @@
-from .conv import ConvQNetwork
+from .discrete import DiscreteConvQNetwork
+from .continuous import ContinuousLinearQNetwork,\
+    TwinnedContinuousLinearQNetwork
