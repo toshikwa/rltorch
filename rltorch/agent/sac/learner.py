@@ -230,13 +230,12 @@ class SacLearner(SacAgent):
             returns[i] = episode_reward
 
         mean_return = np.mean(returns)
-        std_return = np.std(returns)
 
         self.writer.add_scalar(
             'reward/test', mean_return, self.steps)
         print('Learner \t '
               f'Num steps: {self.steps:<5} \t '
-              f'reward: {mean_return:<5.1f} +/- {std_return:<5.1f}')
+              f'reward: {mean_return:<5.1f}')
 
     def save_models(self):
         self.critic.save(

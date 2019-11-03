@@ -8,7 +8,7 @@ from ..base import BaseAgent
 class SacAgent(BaseAgent):
 
     def __init__(self):
-        super(SacAgent, BaseAgent).__init__()
+        super(SacAgent, self).__init__()
         self.writer = None
         self.gamma_n = None
         self.alpha = None
