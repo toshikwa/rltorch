@@ -17,8 +17,8 @@ class SacLearner(SacAgent):
                  batch_size=256, lr=0.0003, hidden_units=[256, 256],
                  memory_size=1e6, gamma=0.99, tau=0.005, entropy_tuning=True,
                  ent_coef=0.2, multi_step=1, per=False, alpha=0.6, beta=0.4,
-                 beta_annealing=0.001, num_epochs=1, start_steps=10000,
-                 log_interval=1, memory_load_interval=5,
+                 beta_annealing=0.001, clip_grad=5.0, num_epochs=1,
+                 start_steps=10000, log_interval=1, memory_load_interval=5,
                  target_update_interval=1, model_save_interval=5,
                  eval_interval=1000, cuda=True, seed=0):
         self.env = env
@@ -94,6 +94,7 @@ class SacLearner(SacAgent):
         self.start_steps = start_steps
         self.gamma_n = gamma ** multi_step
         self.entropy_tuning = entropy_tuning
+        self.clip_grad = clip_grad
         self.num_epochs = num_epochs
         self.log_interval = log_interval
         self.memory_load_interval = memory_load_interval
@@ -131,16 +132,17 @@ class SacLearner(SacAgent):
                 self.calc_critic_loss(batch, weights)
             policy_loss, entropy = self.calc_policy_loss(batch, weights)
 
-            self._update_params(
-                self.q1_optim, self.critic.Q1, q1_loss)
-            self._update_params(
-                self.q2_optim, self.critic.Q2, q2_loss)
-            self._update_params(
-                self.policy_optim, self.policy.net, policy_loss)
+            self.update_params(
+                self.q1_optim, self.critic.Q1, q1_loss, self.clip_grad)
+            self.update_params(
+                self.q2_optim, self.critic.Q2, q2_loss, self.clip_grad)
+            self.update_params(
+                self.policy_optim, self.policy.net, policy_loss,
+                self.clip_grad)
 
             if self.entropy_tuning:
                 entropy_loss = self.calc_entropy_loss(entropy, weights)
-                self._update_params(
+                self.update_params(
                     self.alpha_optim, None, entropy_loss)
                 self.alpha = self.log_alpha.exp()
 
@@ -199,14 +201,6 @@ class SacLearner(SacAgent):
             self.log_alpha * (self.target_entropy - entropy).detach()
             * weights)
         return entropy_loss
-
-    def _update_params(self, optim, network, loss, grad_clip=None):
-        optim.zero_grad()
-        loss.backward(retain_graph=False)
-        if grad_clip is not None:
-            for p in network:
-                torch.nn.utils.clip_grad_norm_(p.parameters(), grad_clip)
-        optim.step()
 
     def interval(self):
         if self.steps % self.eval_interval == 0:

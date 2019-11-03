@@ -14,7 +14,7 @@ class ApexLearner(ApexAgent):
     def __init__(self, env, log_dir, shared_memory, shared_weights,
                  batch_size=64, lr=0.00025/4, memory_size=4e5, gamma=0.99,
                  multi_step=3, alpha=0.4, num_epochs=3, start_steps=1000,
-                 beta=0.6, beta_annealing=0.0, log_interval=10,
+                 beta=0.6, beta_annealing=0.0, clip_grad=5.0, log_interval=10,
                  memory_load_interval=5, model_save_interval=5,
                  target_update_interval=100, eval_interval=1000, cuda=True,
                  seed=0):
@@ -58,6 +58,7 @@ class ApexLearner(ApexAgent):
         self.start_steps = start_steps
         self.gamma_n = gamma ** multi_step
         self.num_epochs = num_epochs
+        self.clip_grad = clip_grad
         self.log_interval = log_interval
         self.memory_load_interval = memory_load_interval
         self.model_save_interval = model_save_interval
@@ -85,9 +86,8 @@ class ApexLearner(ApexAgent):
             target_q = self.calc_target_q(*batch)
             loss = torch.mean((curr_q - target_q).pow(2) * weights)
 
-            self.optim.zero_grad()
-            loss.backward()
-            self.optim.step()
+            self.update_params(
+                self.optim, self.net.modules(), loss, self.clip_grad)
 
             errors = torch.abs(curr_q.detach() - target_q).cpu().numpy()
             self.memory.update_priority(indices, errors)
