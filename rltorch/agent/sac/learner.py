@@ -234,10 +234,9 @@ class SacLearner(SacAgent):
 
         self.writer.add_scalar(
             'reward/test', mean_return, self.steps)
-        print('********  '
-              f'Num steps: {self.steps:<5} '
-              f'reward: {mean_return:<5.1f}+/- {std_return:<5.1f}'
-              ' ********')
+        print('Learner \t '
+              f'Num steps: {self.steps:<5} \t '
+              f'reward: {mean_return:<5.1f} +/- {std_return:<5.1f}')
 
     def save_models(self):
         self.critic.save(
