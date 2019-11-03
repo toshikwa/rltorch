@@ -25,8 +25,8 @@ You can implement Soft Actor-Critic[[2, 3]](#references) agent like this example
 
 ```
 python examples/mujoco/sac.py \
-[--env_id str(default MsPacmanNoFrameskip-v4)] \
-[--num_actors int(default 4)] \
+[--env_id str(default HalfCheetah-v2)] \
+[--num_actors int(default 1)] \
 [--cuda (optional)] [--seed int(default 0)]
 ```
 
@@ -35,8 +35,8 @@ You can implement SAC-Discrete[[4]](#references) agent like this example [here](
 
 ```
 python examples/mujoco/sac.py \
-[--env_id str(default HalfCheetah-v2)] \
-[--num_actors int(default 1)] \
+[--env_id str(default MsPacmanNoFrameskip-v4)] \
+[--num_actors int(default 4)] \
 [--cuda (optional)] [--seed int(default 0)]
 ```
 
