@@ -24,10 +24,10 @@ class ConvCategoricalPolicy(BaseNetwork):
 
     def sample(self, state):
         action_probs = self.policy(state)
-        greedy_actions = torch.argmax(action_probs, dim=1)
+        greedy_actions = torch.argmax(action_probs, dim=1, keepdim=True)
 
         categorical = Categorical(action_probs)
-        actions = categorical.sample().cpu()
+        actions = categorical.sample().view(-1, 1)
 
         log_action_probs = torch.log(
             action_probs + (action_probs == 0.0).float() * 1e-8)
