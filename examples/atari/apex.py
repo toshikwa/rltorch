@@ -39,7 +39,7 @@ def run():
 
     log_dir = os.path.join(
         'logs', args.env_id,
-        datetime.datetime.now().strftime("%Y%m%d-%H%M"))
+        f'apex-{datetime.datetime.now().strftime("%Y%m%d-%H%M")}')
 
     shared_memory = mp.Queue(100)
     mp_manager = mp.Manager()
