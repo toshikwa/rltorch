@@ -11,19 +11,25 @@ pip install -e .
 
 ## Examples
 ### Ape-X
-You can implement [Ape-X]([1]) agent like this example [here](https://github.com/ku2482/rltorch/blob/master/examples/atari/apex.py).
+You can implement [Ape-X](#references) agent like this example [here](https://github.com/ku2482/rltorch/blob/master/examples/atari/apex.py).
 
 ```
-python examples/atari/apex.py [--env_id str(default MsPacmanNoFrameskip-v4)] [--num_actors int(default 4)] [--cuda (optional)] [--seed int(default 0)]
+python examples/atari/apex.py \
+[--env_id str(default MsPacmanNoFrameskip-v4)] \
+[--num_actors int(default 4)] [--cuda (optional)] \
+[--seed int(default 0)]
 ```
 
 ### Soft Actor-Critic
-You can implement [Soft Actor-Critic]([2, 3]) agent like this example [here](https://github.com/ku2482/rltorch/blob/master/examples/mujoco/sac.py).
+You can implement [Soft Actor-Critic](#references) agent like this example [here](https://github.com/ku2482/rltorch/blob/master/examples/mujoco/sac.py).
 
 Note that you need [a license](https://www.roboti.us/license.html) and [mujoco_py](https://github.com/openai/mujoco-py) to be installed.
 
 ```
-python examples/mujoco/sac.py [--env_id str(default HalfCheetah-v2)] [--num_actors int(default 1)] [--cuda (optional)] [--seed int(default 0)]
+python examples/mujoco/sac.py \
+[--env_id str(default HalfCheetah-v2)] \
+[--num_actors int(default 1)] \
+[--cuda (optional)] [--seed int(default 0)]
 ```
 
 ## References
