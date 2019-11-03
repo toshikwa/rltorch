@@ -1,5 +1,7 @@
+from copy import deepcopy
 import numpy as np
 import torch
+from torch import nn
 
 from ..base import BaseAgent
 
@@ -7,7 +9,9 @@ from ..base import BaseAgent
 class ApexAgent(BaseAgent):
 
     def __init__(self):
-        super(ApexAgent, BaseAgent).__init__()
+        super(ApexAgent, self).__init__()
+        self.net = nn.Sequential()
+        self.target_net = nn.Sequential()
         self.epsilon = None
         self.writer = None
         self.gamma_n = None
@@ -39,6 +43,27 @@ class ApexAgent(BaseAgent):
 
         target_q = rewards + (1.0 - dones) * self.gamma_n * next_q
         return target_q
+
+    def load_weights(self):
+        try:
+            self.net.load_state_dict(self.shared_weights['net'])
+            self.target_net.load_state_dict(self.shared_weights['target_net'])
+            return True
+        except KeyError:
+            return False
+
+    def save_weights(self):
+        self.shared_weights['net'] = deepcopy(self.net).cpu().state_dict()
+        self.shared_weights['target_net'] =\
+            deepcopy(self.target_net).cpu().state_dict()
+
+    def to_batch(self, state, action, reward, next_state, done):
+        state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        action = torch.FloatTensor([action]).unsqueeze(-1).to(self.device)
+        reward = torch.FloatTensor([reward]).unsqueeze(-1).to(self.device)
+        next_state = torch.FloatTensor(next_state).unsqueeze(0).to(self.device)
+        done = torch.FloatTensor([done]).unsqueeze(-1).to(self.device)
+        return state, action, reward, next_state, done
 
     def __del__(self):
         self.writer.close()

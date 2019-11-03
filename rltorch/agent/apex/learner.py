@@ -5,7 +5,7 @@ import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 
 from .base import ApexAgent
-from ...q_function.conv import ConvQNetwork
+from ...q_function import DiscreteConvQNetwork
 from ...memory import PrioritizedMemory
 
 
@@ -29,10 +29,10 @@ class ApexLearner(ApexAgent):
         self.device = torch.device(
             "cuda" if cuda and torch.cuda.is_available() else "cpu")
 
-        self.net = ConvQNetwork(
+        self.net = DiscreteConvQNetwork(
             self.env.observation_space.shape[0],
             self.env.action_space.n).to(self.device)
-        self.target_net = ConvQNetwork(
+        self.target_net = DiscreteConvQNetwork(
             self.env.observation_space.shape[0],
             self.env.action_space.n).to(self.device)
         self.target_net.load_state_dict(self.net.state_dict())
@@ -45,13 +45,13 @@ class ApexLearner(ApexAgent):
             alpha=alpha, beta=beta, beta_annealing=beta_annealing)
 
         self.log_dir = log_dir
-        self.model_path = os.path.join(log_dir, 'model')
-        self.summary_path = os.path.join(log_dir, 'summary', 'leaner')
-        if not os.path.exists(self.model_path):
-            os.makedirs(self.model_path)
-        if not os.path.exists(self.summary_path):
-            os.makedirs(self.summary_path)
-        self.writer = SummaryWriter(log_dir=self.summary_path)
+        self.model_dir = os.path.join(log_dir, 'model')
+        self.summary_dir = os.path.join(log_dir, 'summary', 'leaner')
+        if not os.path.exists(self.model_dir):
+            os.makedirs(self.model_dir)
+        if not os.path.exists(self.summary_dir):
+            os.makedirs(self.summary_dir)
+        self.writer = SummaryWriter(log_dir=self.summary_dir)
 
         self.steps = 0
         self.batch_size = batch_size
@@ -109,14 +109,11 @@ class ApexLearner(ApexAgent):
     def interval(self):
         if self.steps % self.eval_interval == 0:
             self.evaluate()
-
         if self.steps % self.memory_load_interval == 0:
             self.load_memory()
-
         if self.steps % self.model_save_interval == 0:
             self.save_weights()
             self.save_models()
-
         if self.steps % self.target_update_interval == 0:
             self.target_net.load_state_dict(self.net.state_dict())
 
@@ -150,6 +147,6 @@ class ApexLearner(ApexAgent):
 
     def save_models(self):
         self.net.save(
-            os.path.join(self.model_path, 'net.pth'))
+            os.path.join(self.model_dir, 'net.pth'))
         self.target_net.save(
-            os.path.join(self.model_path, 'target_net.pth'))
+            os.path.join(self.model_dir, 'target_net.pth'))

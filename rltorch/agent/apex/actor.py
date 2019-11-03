@@ -5,7 +5,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from .base import ApexAgent
 from ...memory import PrioritizedMemory
-from ...q_function import ConvQNetwork
+from ...q_function import DiscreteConvQNetwork
 
 
 class ApexActor(ApexAgent):
@@ -29,10 +29,10 @@ class ApexActor(ApexAgent):
         self.device = torch.device(
             "cuda" if cuda and torch.cuda.is_available() else "cpu")
 
-        self.net = ConvQNetwork(
+        self.net = DiscreteConvQNetwork(
             self.env.observation_space.shape[0],
             self.env.action_space.n).to(self.device).eval()
-        self.target_net = ConvQNetwork(
+        self.target_net = DiscreteConvQNetwork(
             self.env.observation_space.shape[0],
             self.env.action_space.n).to(self.device).eval()
         self.target_net.load_state_dict(self.net.state_dict())
@@ -43,11 +43,11 @@ class ApexActor(ApexAgent):
             alpha=alpha, beta=beta, beta_annealing=beta_annealing)
 
         self.log_dir = log_dir
-        self.summary_path = os.path.join(
+        self.summary_dir = os.path.join(
             log_dir, 'summary', f'actor-{self.actor_id}')
-        if not os.path.exists(self.summary_path):
-            os.makedirs(self.summary_path)
-        self.writer = SummaryWriter(log_dir=self.summary_path)
+        if not os.path.exists(self.summary_dir):
+            os.makedirs(self.summary_dir)
+        self.writer = SummaryWriter(log_dir=self.summary_dir)
 
         if num_actors > 1:
             self.epsilon = 0.4 ** (1 + actor_id * 7 / (num_actors-1))
@@ -60,6 +60,10 @@ class ApexActor(ApexAgent):
         self.log_interval = log_interval
         self.memory_save_interval = memory_save_interval
         self.model_load_interval = model_load_interval
+
+        load = False
+        while load is False:
+            load = self.load_weights()
 
     def run(self):
         while True:

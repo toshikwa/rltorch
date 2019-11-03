@@ -1,6 +1,4 @@
 import torch
-from torch import nn
-from copy import deepcopy
 
 
 class BaseAgent:
@@ -9,9 +7,7 @@ class BaseAgent:
         self.env = None
         self.device = None
         self.shared_memory = None
-        self.shared_weights = None
-        self.net = nn.Sequential()
-        self.target_net = nn.Sequential()
+        self.shared_weights = dict()
         self.memory = None
 
     def run(self):
@@ -36,13 +32,10 @@ class BaseAgent:
         raise Exception('You need to implement calc_current_q method.')
 
     def load_weights(self):
-        self.net.load_state_dict(self.shared_weights['net'])
-        self.target_net.load_state_dict(self.shared_weights['target_net'])
+        raise Exception('You need to implement load_weights method.')
 
     def save_weights(self):
-        self.shared_weights['net'] = deepcopy(self.net).cpu().state_dict()
-        self.shared_weights['target_net'] =\
-            deepcopy(self.target_net).cpu().state_dict()
+        raise Exception('You need to implement save_weights method.')
 
     def load_memory(self):
         while not self.shared_memory.empty():
@@ -52,11 +45,3 @@ class BaseAgent:
     def save_memory(self):
         self.shared_memory.put(self.memory.get())
         self.memory.reset()
-
-    def to_batch(self, state, action, reward, next_state, done):
-        state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
-        action = torch.FloatTensor([action]).unsqueeze(-1).to(self.device)
-        reward = torch.FloatTensor([reward]).unsqueeze(-1).to(self.device)
-        next_state = torch.FloatTensor(next_state).unsqueeze(0).to(self.device)
-        done = torch.FloatTensor([done]).unsqueeze(-1).to(self.device)
-        return state, action, reward, next_state, done
