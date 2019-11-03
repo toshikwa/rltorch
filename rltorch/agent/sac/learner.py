@@ -137,7 +137,7 @@ class SacLearner(SacAgent):
             self.update_params(
                 self.q2_optim, self.critic.Q2, q2_loss, self.clip_grad)
             self.update_params(
-                self.policy_optim, self.policy.net, policy_loss,
+                self.policy_optim, self.policy.modules(), policy_loss,
                 self.clip_grad)
 
             if self.entropy_tuning:

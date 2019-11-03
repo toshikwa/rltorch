@@ -23,12 +23,10 @@ class TwinnedContinuousLinearQNetwork(BaseNetwork):
                  initializer='xavier'):
         super(TwinnedContinuousLinearQNetwork, self).__init__()
 
-        self.Q1 = create_linear_network(
-            input_dim + output_dim, 1, hidden_units=hidden_units,
-            initializer=initializer)
-        self.Q2 = create_linear_network(
-            input_dim + output_dim, 1, hidden_units=hidden_units,
-            initializer=initializer)
+        self.Q1 = ContinuousLinearQNetwork(
+            input_dim, output_dim, hidden_units, initializer)
+        self.Q2 = ContinuousLinearQNetwork(
+            input_dim, output_dim, hidden_units, initializer)
 
     def forward(self, states, actions):
         x = torch.cat([states, actions], dim=1)
