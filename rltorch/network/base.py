@@ -8,6 +8,7 @@ def grad_false(m):
 
 
 class BaseNetwork(nn.Module):
+    _n = None
 
     def save(self, path):
         torch.save(self.state_dict(), path)
@@ -19,11 +20,13 @@ class BaseNetwork(nn.Module):
         return super(BaseNetwork, self).eval().apply(grad_false)
 
     @property
-    def n_params(self):
-        n = 0
-        for p in list(self.parameters()):
-            nn = 1
-            for s in list(p.size()):
-                nn = nn * s
-            n += nn
-        return n
+    def num_params(self):
+        if self._n is None:
+            n = 0
+            for p in list(self.parameters()):
+                nn = 1
+                for s in list(p.size()):
+                    nn = nn * s
+                n += nn
+            self._n = n
+        return self._n

@@ -76,7 +76,8 @@ class ApexLearner(ApexAgent):
 
     def learn(self):
         total_loss = 0.
-        mean_q = 0.
+        total_mean_grads = 0.
+        total_mean_q = 0.
 
         for epoch in range(self.num_epochs):
             batch, indices, weights = \
@@ -86,21 +87,24 @@ class ApexLearner(ApexAgent):
             target_q = self.calc_target_q(*batch)
             loss = torch.mean((curr_q - target_q).pow(2) * weights)
 
-            self.update_params(
-                self.optim, self.net.modules(), loss, self.clip_grad)
+            total_mean_grads += self.update_params(
+                self.optim, self.net, loss, self.clip_grad)
 
             errors = torch.abs(curr_q.detach() - target_q).cpu().numpy()
             self.memory.update_priority(indices, errors)
 
             total_loss += loss.detach().item()
-            mean_q += curr_q.detach().mean().item()
+            total_mean_q += curr_q.detach().mean().item()
 
         if self.steps % self.log_interval == 0:
             self.writer.add_scalar(
                 "loss/learner", total_loss / self.num_epochs,
                 self.steps)
             self.writer.add_scalar(
-                "stats/mean_Q", mean_q / self.num_epochs,
+                "stats/mean_grads", total_mean_grads / self.num_epochs,
+                self.steps)
+            self.writer.add_scalar(
+                "stats/mean_Q", total_mean_q / self.num_epochs,
                 self.steps)
             print(
                 f"Learer \t loss: {total_loss / self.num_epochs:< 8.3f} "

@@ -17,7 +17,7 @@ class SacLearner(SacAgent):
                  batch_size=256, lr=0.0003, hidden_units=[256, 256],
                  memory_size=1e6, gamma=0.99, tau=0.005, entropy_tuning=True,
                  ent_coef=0.2, multi_step=1, per=False, alpha=0.6, beta=0.4,
-                 beta_annealing=0.001, clip_grad=5.0, num_epochs=1,
+                 beta_annealing=0.001, clip_grad=None, num_epochs=1,
                  start_steps=10000, log_interval=1, memory_load_interval=5,
                  target_update_interval=1, model_save_interval=5,
                  eval_interval=1000, cuda=True, seed=0):
@@ -119,6 +119,9 @@ class SacLearner(SacAgent):
         total_mean_q1 = 0.
         total_mean_q2 = 0.
         total_mean_entropy = 0.
+        total_mean_q1_grads = 0.
+        total_mean_q2_grads = 0.
+        total_mean_policy_grads = 0.
 
         for epoch in range(self.num_epochs):
             if self.per:
@@ -132,13 +135,12 @@ class SacLearner(SacAgent):
                 self.calc_critic_loss(batch, weights)
             policy_loss, entropy = self.calc_policy_loss(batch, weights)
 
-            self.update_params(
+            total_mean_q1_grads += self.update_params(
                 self.q1_optim, self.critic.Q1, q1_loss, self.clip_grad)
-            self.update_params(
+            total_mean_q2_grads += self.update_params(
                 self.q2_optim, self.critic.Q2, q2_loss, self.clip_grad)
-            self.update_params(
-                self.policy_optim, self.policy.modules(), policy_loss,
-                self.clip_grad)
+            total_mean_policy_grads += self.update_params(
+                self.policy_optim, self.policy, policy_loss, self.clip_grad)
 
             if self.entropy_tuning:
                 entropy_loss = self.calc_entropy_loss(entropy, weights)
@@ -174,6 +176,15 @@ class SacLearner(SacAgent):
             'stats/mean_Q2', total_mean_q2/self.num_epochs, self.steps)
         self.writer.add_scalar(
             'stats/mean_entropy', total_mean_entropy/self.num_epochs,
+            self.steps)
+        self.writer.add_scalar(
+            'stats/mean_Q1_grads', total_mean_q1_grads/self.num_epochs,
+            self.steps)
+        self.writer.add_scalar(
+            'stats/mean_Q2_grads', total_mean_q2_grads/self.num_epochs,
+            self.steps)
+        self.writer.add_scalar(
+            'stats/mean_policy_grads', total_policy_loss/self.num_epochs,
             self.steps)
 
     def calc_critic_loss(self, batch, weights):

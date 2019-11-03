@@ -29,7 +29,6 @@ class TwinnedContinuousLinearQNetwork(BaseNetwork):
             input_dim, output_dim, hidden_units, initializer)
 
     def forward(self, states, actions):
-        x = torch.cat([states, actions], dim=1)
-        Q1 = self.Q1(x)
-        Q2 = self.Q2(x)
+        Q1 = self.Q1(states, actions)
+        Q2 = self.Q2(states, actions)
         return Q1, Q2

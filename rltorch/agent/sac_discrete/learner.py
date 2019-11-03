@@ -110,6 +110,9 @@ class SacDiscreteLearner(SacDiscreteAgent):
         total_mean_q1 = 0.
         total_mean_q2 = 0.
         total_mean_entropy = 0.
+        total_mean_q1_grads = 0.
+        total_mean_q2_grads = 0.
+        total_mean_policy_grads = 0.
 
         for epoch in range(self.num_epochs):
             if self.per:
@@ -124,15 +127,12 @@ class SacDiscreteLearner(SacDiscreteAgent):
             policy_loss, entropy = self.calc_policy_loss(batch, weights)
             entropy_loss = self.calc_entropy_loss(entropy, weights)
 
-            self.update_params(
-                self.q1_optim, self.critic.Q1.modules(), q1_loss,
-                self.clip_grad)
-            self.update_params(
-                self.q2_optim, self.critic.Q2.modules(), q2_loss,
-                self.clip_grad)
-            self.update_params(
-                self.policy_optim, self.policy.modules(), policy_loss,
-                self.clip_grad)
+            total_mean_q1_grads += self.update_params(
+                self.q1_optim, self.critic.Q1, q1_loss, self.clip_grad)
+            total_mean_q2_grads += self.update_params(
+                self.q2_optim, self.critic.Q2, q2_loss, self.clip_grad)
+            total_mean_policy_grads += self.update_params(
+                self.policy_optim, self.policy, policy_loss, self.clip_grad)
             self.update_params(
                 self.alpha_optim, None, entropy_loss)
 
@@ -164,6 +164,15 @@ class SacDiscreteLearner(SacDiscreteAgent):
             'stats/mean_Q2', total_mean_q2/self.num_epochs, self.steps)
         self.writer.add_scalar(
             'stats/mean_entropy', total_mean_entropy/self.num_epochs,
+            self.steps)
+        self.writer.add_scalar(
+            'stats/mean_Q1_grads', total_mean_q1_grads/self.num_epochs,
+            self.steps)
+        self.writer.add_scalar(
+            'stats/mean_Q2_grads', total_mean_q2_grads/self.num_epochs,
+            self.steps)
+        self.writer.add_scalar(
+            'stats/mean_policy_grads', total_policy_loss/self.num_epochs,
             self.steps)
 
     def calc_critic_loss(self, batch, weights):
