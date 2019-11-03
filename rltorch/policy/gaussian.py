@@ -1,7 +1,7 @@
 import torch
+from torch.distributions import Normal
 
 from ..network import BaseNetwork, create_linear_network
-from torch.distributions import Normal
 
 
 class LinearGaussianPolicy(BaseNetwork):
@@ -9,14 +9,16 @@ class LinearGaussianPolicy(BaseNetwork):
     LOG_STD_MIN = -20
     eps = 1e-6
 
-    def __init__(self, input_dim, output_dim, hidden_units=[]):
+    def __init__(self, input_dim, output_dim, hidden_units=[],
+                 initializer='xavier'):
         super(LinearGaussianPolicy, self).__init__()
 
-        self.net = create_linear_network(
-            input_dim, output_dim*2, hidden_units=hidden_units)
+        self.policy = create_linear_network(
+            input_dim, output_dim*2, hidden_units=hidden_units,
+            initializer=initializer)
 
     def forward(self, states):
-        mean, log_std = torch.chunk(self.net(states), 2, dim=-1)
+        mean, log_std = torch.chunk(self.policy(states), 2, dim=-1)
         log_std = torch.clamp(
             log_std, min=self.LOG_STD_MIN, max=self.LOG_STD_MAX)
 
