@@ -70,16 +70,17 @@ class ApexLearner(ApexAgent):
             self.load_memory()
 
         while True:
-            self.steps += 1
             self.learn()
             self.interval()
 
     def learn(self):
         total_loss = 0.
-        total_mean_grads = 0.
+        total_grads = 0.
         total_mean_q = 0.
 
         for epoch in range(self.num_epochs):
+            self.steps += 1
+
             batch, indices, weights = \
                 self.memory.sample(self.batch_size)
 
@@ -87,7 +88,7 @@ class ApexLearner(ApexAgent):
             target_q = self.calc_target_q(*batch)
             loss = torch.mean((curr_q - target_q).pow(2) * weights)
 
-            total_mean_grads += self.update_params(
+            total_grads += self.update_params(
                 self.optim, self.net, loss, self.clip_grad)
 
             errors = torch.abs(curr_q.detach() - target_q).cpu().numpy()
@@ -101,14 +102,11 @@ class ApexLearner(ApexAgent):
                 "loss/learner", total_loss / self.num_epochs,
                 self.steps)
             self.writer.add_scalar(
-                "stats/mean_grads", total_mean_grads / self.num_epochs,
+                "stats/grads_Q", total_grads / self.num_epochs,
                 self.steps)
             self.writer.add_scalar(
                 "stats/mean_Q", total_mean_q / self.num_epochs,
                 self.steps)
-            print(
-                f"Learer \t loss: {total_loss / self.num_epochs:< 8.3f} "
-                f"memory: {len(self.memory):<5} \t")
 
     def interval(self):
         if self.steps % self.eval_interval == 0:
@@ -144,10 +142,9 @@ class ApexLearner(ApexAgent):
 
         self.writer.add_scalar(
             'reward/test', mean_return, self.steps)
-        print('********  '
+        print('Learer  '
               f'Num steps: {self.steps:<5} '
-              f'reward: {mean_return:<5.1f}+/- {std_return:<5.1f}'
-              ' ********')
+              f'reward: {mean_return:<5.1f}+/- {std_return:<5.1f}')
 
     def save_models(self):
         self.net.save(
