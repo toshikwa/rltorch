@@ -57,14 +57,6 @@ class ApexAgent(BaseAgent):
         self.shared_weights['target_net'] =\
             deepcopy(self.target_net).cpu().state_dict()
 
-    def to_batch(self, state, action, reward, next_state, done):
-        state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
-        action = torch.FloatTensor([action]).unsqueeze(-1).to(self.device)
-        reward = torch.FloatTensor([reward]).unsqueeze(-1).to(self.device)
-        next_state = torch.FloatTensor(next_state).unsqueeze(0).to(self.device)
-        done = torch.FloatTensor([done]).unsqueeze(-1).to(self.device)
-        return state, action, reward, next_state, done
-
     def __del__(self):
         self.writer.close()
         self.env.close()

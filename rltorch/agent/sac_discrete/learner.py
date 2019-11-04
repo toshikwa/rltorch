@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import torch
-import torch.optim as optim
 from torch.optim import Adam
 from torch.utils.tensorboard import SummaryWriter
 
@@ -9,6 +8,7 @@ from .base import SacDiscreteAgent
 from rltorch.memory import Memory, MultiStepMemory, PrioritizedMemory
 from rltorch.policy import ConvCategoricalPolicy
 from rltorch.q_function import TwinedDiscreteConvQNetwork
+from rltorch.agent import soft_update, hard_update, update_params
 
 
 class SacDiscreteLearner(SacDiscreteAgent):
@@ -16,8 +16,8 @@ class SacDiscreteLearner(SacDiscreteAgent):
     def __init__(self, env, log_dir, shared_memory, shared_weights,
                  batch_size=64, lr=0.0003, memory_size=1e5, gamma=0.99,
                  tau=0.005, multi_step=3, per=True, alpha=0.6, beta=0.4,
-                 beta_annealing=0.001, clip_grad=5.0, num_epochs=4,
-                 start_steps=20000, log_interval=1, memory_load_interval=5,
+                 beta_annealing=0.001, clip_grad=5.0, update_per_steps=4,
+                 start_steps=100, log_interval=1, memory_load_interval=5,
                  target_update_interval=1, model_save_interval=5,
                  eval_interval=1000, cuda=True, seed=0):
         self.env = env
@@ -34,8 +34,6 @@ class SacDiscreteLearner(SacDiscreteAgent):
         self.policy = ConvCategoricalPolicy(
             self.env.observation_space.shape[0],
             self.env.action_space.n).to(self.device)
-        self.policy_optim = Adam(self.policy.parameters(), lr=lr)
-
         self.critic = TwinedDiscreteConvQNetwork(
             self.env.observation_space.shape[0],
             self.env.action_space.n).to(self.device)
@@ -43,11 +41,12 @@ class SacDiscreteLearner(SacDiscreteAgent):
             self.env.observation_space.shape[0],
             self.env.action_space.n).to(self.device).eval()
 
-        self.hard_update()
-        self.q1_optim = optim.Adam(self.critic.Q1.parameters(), lr=lr)
-        self.q2_optim = optim.Adam(self.critic.Q2.parameters(), lr=lr)
+        hard_update(self.critic_target, self.critic)
+        self.policy_optim = Adam(self.policy.parameters(), lr=lr)
+        self.q1_optim = Adam(self.critic.Q1.parameters(), lr=lr)
+        self.q2_optim = Adam(self.critic.Q2.parameters(), lr=lr)
 
-        self.target_entropy = -np.log(1.0/self.env.action_space.n) * 0.98
+        self.target_entropy = np.log(self.env.action_space.n) * 0.98
         self.log_alpha = torch.zeros(
             1, requires_grad=True, device=self.device)
         self.alpha = self.log_alpha.exp()
@@ -58,17 +57,17 @@ class SacDiscreteLearner(SacDiscreteAgent):
             self.memory = PrioritizedMemory(
                 memory_size, self.env.observation_space.shape,
                 (1,), self.device, gamma, multi_step,
-                is_image=False, alpha=alpha, beta=beta,
+                is_image=True, alpha=alpha, beta=beta,
                 beta_annealing=beta_annealing)
         elif multi_step == 1:
             self.memory = Memory(
                 memory_size, self.env.observation_space.shape,
-                (1,), self.device, is_image=False)
+                (1,), self.device, is_image=True)
         else:
             self.memory = MultiStepMemory(
                 memory_size, self.env.observation_space.shape,
                 (1,), self.device, gamma, multi_step,
-                is_image=False)
+                is_image=True)
 
         self.log_dir = log_dir
         self.model_dir = os.path.join(log_dir, 'model')
@@ -86,7 +85,7 @@ class SacDiscreteLearner(SacDiscreteAgent):
         self.start_steps = start_steps
         self.gamma_n = gamma ** multi_step
         self.clip_grad = clip_grad
-        self.num_epochs = num_epochs
+        self.update_per_steps = update_per_steps
         self.log_interval = log_interval
         self.memory_load_interval = memory_load_interval
         self.model_save_interval = model_save_interval
@@ -98,84 +97,55 @@ class SacDiscreteLearner(SacDiscreteAgent):
             self.load_memory()
 
         while True:
-            self.learn()
+            for _ in range(self.update_per_steps):
+                self.steps += 1
+                self.learn()
             self.interval()
 
     def learn(self):
-        total_q1_loss = 0.
-        total_q2_loss = 0.
-        total_policy_loss = 0.
-        total_entropy_loss = 0.
-        total_mean_q1 = 0.
-        total_mean_q2 = 0.
-        total_mean_entropy = 0.
-        total_grads_q1 = 0.
-        total_grads_q2 = 0.
-        total_grads_policy = 0.
+        if self.per:
+            batch, indices, weights = \
+                self.memory.sample(self.batch_size)
+        else:
+            batch = self.memory.sample(self.batch_size)
+            weights = 1.
 
-        for epoch in range(self.num_epochs):
-            self.steps += 1
+        q1_loss, q2_loss, errors, mean_q1, mean_q2 =\
+            self.calc_critic_loss(batch, weights)
+        policy_loss, entropies = self.calc_policy_loss(batch, weights)
+        entropy_loss = self.calc_entropy_loss(entropies, weights)
 
-            if self.per:
-                batch, indices, weights = \
-                    self.memory.sample(self.batch_size)
-            else:
-                batch = self.memory.sample(self.batch_size)
-                weights = 1.
+        update_params(
+            self.q1_optim, self.critic.Q1, q1_loss, self.clip_grad)
+        update_params(
+            self.q2_optim, self.critic.Q2, q2_loss, self.clip_grad)
+        update_params(
+            self.policy_optim, self.policy, policy_loss, self.clip_grad)
+        self.update_params(
+            self.alpha_optim, None, entropy_loss)
 
-            q1_loss, q2_loss, errors, mean_q1, mean_q2 =\
-                self.calc_critic_loss(batch, weights)
-            policy_loss, entropy = self.calc_policy_loss(batch, weights)
-            entropy_loss = self.calc_entropy_loss(entropy, weights)
+        if self.per:
+            self.memory.update_priority(indices, errors.cpu().numpy())
 
-            total_grads_q1 += self.update_params(
-                self.q1_optim, self.critic.Q1, q1_loss, self.clip_grad)
-            total_grads_q2 += self.update_params(
-                self.q2_optim, self.critic.Q2, q2_loss, self.clip_grad)
-            total_grads_policy += self.update_params(
-                self.policy_optim, self.policy, policy_loss, self.clip_grad)
-            self.update_params(
-                self.alpha_optim, None, entropy_loss)
-
-            if self.per:
-                self.memory.update_priority(indices, errors.cpu().numpy())
-
-            self.alpha = self.log_alpha.exp()
-            total_entropy_loss += entropy_loss.detach().item()
-            total_q1_loss += q1_loss.detach().item()
-            total_q2_loss += q2_loss.detach().item()
-            total_policy_loss += policy_loss.detach().item()
-            total_mean_q1 += mean_q1
-            total_mean_q2 += mean_q2
-            total_mean_entropy += entropy.detach().mean().item()
+        self.alpha = self.log_alpha.exp()
 
         if self.steps % self.log_interval == 0:
             self.writer.add_scalar(
-                'loss/Q1', total_q1_loss/self.num_epochs, self.steps)
+                'loss/Q1', q1_loss.detach().item(), self.steps)
             self.writer.add_scalar(
-                'loss/Q2', total_q2_loss/self.num_epochs, self.steps)
+                'loss/Q2', q2_loss.detach().item(), self.steps)
             self.writer.add_scalar(
-                'loss/policy', total_policy_loss/self.num_epochs, self.steps)
+                'loss/policy', policy_loss.detach().item(), self.steps)
             self.writer.add_scalar(
-                'loss/alpha', total_entropy_loss/self.num_epochs, self.steps)
+                'loss/alpha', entropy_loss.detach().item(), self.steps)
             self.writer.add_scalar(
-                'stats/alpha', self.alpha.clone().item(), self.steps)
+                'stats/alpha', self.alpha.detach().item(), self.steps)
             self.writer.add_scalar(
-                'stats/mean_Q1', total_mean_q1/self.num_epochs, self.steps)
+                'stats/mean_Q1', mean_q1, self.steps)
             self.writer.add_scalar(
-                'stats/mean_Q2', total_mean_q2/self.num_epochs, self.steps)
+                'stats/mean_Q2', mean_q2, self.steps)
             self.writer.add_scalar(
-                'stats/mean_entropy', total_mean_entropy/self.num_epochs,
-                self.steps)
-            self.writer.add_scalar(
-                'stats/grads_Q1', total_grads_q1/self.num_epochs,
-                self.steps)
-            self.writer.add_scalar(
-                'stats/grads_Q2', total_grads_q2/self.num_epochs,
-                self.steps)
-            self.writer.add_scalar(
-                'stats/grads_policy', total_grads_policy/self.num_epochs,
-                self.steps)
+                'stats/entropy', entropies.detach().mean().item(), self.steps)
 
     def calc_critic_loss(self, batch, weights):
         curr_q1, curr_q2 = self.calc_current_q(*batch)
@@ -201,10 +171,11 @@ class SacDiscreteLearner(SacDiscreteAgent):
             action_probs * log_action_probs, dim=1, keepdim=True)
         return policy_loss, entropies
 
-    def calc_entropy_loss(self, entropy, weights):
-        entropy_loss = -torch.mean(
-            self.log_alpha * (self.target_entropy - entropy).detach()
-            * weights)
+    def calc_entropy_loss(self, entropies, weights):
+        entropy_loss = -(
+            self.log_alpha * weights
+            * (self.target_entropy-entropies).detach()
+            ).mean()
         return entropy_loss
 
     def interval(self):
@@ -216,7 +187,7 @@ class SacDiscreteLearner(SacDiscreteAgent):
             self.save_weights()
             self.save_models()
         if self.steps % self.target_update_interval == 0:
-            self.soft_update()
+            soft_update(self.critic_target, self.critic, self.tau)
 
     def evaluate(self):
         episodes = 10
@@ -231,7 +202,6 @@ class SacDiscreteLearner(SacDiscreteAgent):
                 next_state, reward, done, _ = self.env.step(action)
                 episode_reward += reward
                 state = next_state
-
             returns[i] = episode_reward
 
         mean_return = np.mean(returns)

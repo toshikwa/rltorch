@@ -7,6 +7,7 @@ from .base import SacAgent
 from rltorch.memory import Memory, MultiStepMemory, PrioritizedMemory
 from rltorch.policy import LinearGaussianPolicy
 from rltorch.q_function import TwinnedContinuousLinearQNetwork
+from rltorch.agent import to_batch, hard_update
 
 
 class SacActor(SacAgent):
@@ -43,7 +44,7 @@ class SacActor(SacAgent):
             self.env.observation_space.shape[0],
             self.env.action_space.shape[0],
             hidden_units=hidden_units).to(self.device).eval()
-        self.hard_update()
+        hard_update(self.critic_target, self.critic)
 
         if per:
             self.memory = PrioritizedMemory(
@@ -107,8 +108,9 @@ class SacActor(SacAgent):
                 masked_done = done
 
             if self.per:
-                batch = self.to_batch(
-                    state, action, reward, next_state, masked_done)
+                batch = to_batch(
+                    state, action, reward, next_state, masked_done,
+                    self.device)
                 with torch.no_grad():
                     curr_q1, curr_q2 = self.calc_current_q(*batch)
                 target_q = self.calc_target_q(*batch)

@@ -7,6 +7,7 @@ from torch.utils.tensorboard import SummaryWriter
 from .base import ApexAgent
 from rltorch.q_function import DiscreteConvQNetwork
 from rltorch.memory import PrioritizedMemory
+from rltorch.agent import hard_update
 
 
 class ApexLearner(ApexAgent):
@@ -35,7 +36,8 @@ class ApexLearner(ApexAgent):
         self.target_net = DiscreteConvQNetwork(
             self.env.observation_space.shape[0],
             self.env.action_space.n).to(self.device)
-        self.target_net.load_state_dict(self.net.state_dict())
+        hard_update(self.target_net, self.net)
+
         self.optim = optim.Adam(self.net.parameters(), lr=lr)
         self.save_weights()
 
@@ -117,7 +119,7 @@ class ApexLearner(ApexAgent):
             self.save_weights()
             self.save_models()
         if self.steps % self.target_update_interval == 0:
-            self.target_net.load_state_dict(self.net.state_dict())
+            hard_update(self.target_net, self.net)
 
     def evaluate(self):
         episodes = 10

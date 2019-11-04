@@ -7,6 +7,7 @@ from .base import SacDiscreteAgent
 from rltorch.memory import Memory, MultiStepMemory, PrioritizedMemory
 from rltorch.policy import ConvCategoricalPolicy
 from rltorch.q_function import TwinedDiscreteConvQNetwork
+from rltorch.agent import to_batch, hard_update
 
 
 class SacDiscreteActor(SacDiscreteAgent):
@@ -15,7 +16,7 @@ class SacDiscreteActor(SacDiscreteAgent):
     def __init__(self, env, log_dir, shared_memory, shared_weights,
                  actor_id, memory_size=1e4, gamma=0.99, multi_step=3,
                  per=True, alpha=0.6, beta=0.4, beta_annealing=0.001,
-                 start_steps=5000, log_interval=10, memory_save_interval=5,
+                 start_steps=10000, log_interval=10, memory_save_interval=5,
                  model_load_interval=5, cuda=True, seed=0):
 
         self.actor_id = actor_id
@@ -39,7 +40,7 @@ class SacDiscreteActor(SacDiscreteAgent):
         self.critic_target = TwinedDiscreteConvQNetwork(
             self.env.observation_space.shape[0],
             self.env.action_space.n).to(self.device).eval()
-        self.hard_update()
+        hard_update(self.critic_target, self.critic)
 
         if per:
             self.memory = PrioritizedMemory(
@@ -102,23 +103,26 @@ class SacDiscreteActor(SacDiscreteAgent):
             else:
                 masked_done = done
 
+            clipped_reward = max(min(reward, 1.0), -1.0)
+
             if self.per:
-                batch = self.to_batch(
-                    state, action, reward, next_state, masked_done)
+                batch = to_batch(
+                    state, action, clipped_reward,
+                    next_state, masked_done, self.device)
                 with torch.no_grad():
                     curr_q1, curr_q2 = self.calc_current_q(*batch)
                 target_q = self.calc_target_q(*batch)
                 error = torch.abs(curr_q1 - target_q).item()
 
                 self.memory.append(
-                    state, action, reward, next_state, masked_done, error,
-                    episode_done=done)
+                    state, action, clipped_reward, next_state,
+                    masked_done, error, episode_done=done)
             elif self.multi_step == 1:
                 self.memory.append(
-                    state, action, reward, next_state, masked_done)
+                    state, action, clipped_reward, next_state, masked_done)
             else:
                 self.memory.append(
-                    state, action, reward, next_state, masked_done,
+                    state, action, clipped_reward, next_state, masked_done,
                     episode_done=done)
 
             state = next_state

@@ -52,15 +52,6 @@ class SacAgent(BaseAgent):
 
         return target_q
 
-    def soft_update(self):
-        for target, source in zip(
-                self.critic_target.parameters(), self.critic.parameters()):
-            target.data.copy_(
-                target.data * (1.0 - self.tau) + source.data * self.tau)
-
-    def hard_update(self):
-        self.critic.load_state_dict(self.critic_target.state_dict())
-
     def load_weights(self):
         try:
             self.policy.load_state_dict(self.shared_weights['policy'])
@@ -81,14 +72,6 @@ class SacAgent(BaseAgent):
         self.shared_weights['critic_target'] = deepcopy(
             self.critic_target).cpu().state_dict()
         self.shared_weights['alpha'] = self.alpha.clone().detach().item()
-
-    def to_batch(self, state, action, reward, next_state, done):
-        state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
-        action = torch.FloatTensor(action).unsqueeze(0).to(self.device)
-        reward = torch.FloatTensor([reward]).unsqueeze(-1).to(self.device)
-        next_state = torch.FloatTensor(next_state).unsqueeze(0).to(self.device)
-        done = torch.FloatTensor([done]).unsqueeze(-1).to(self.device)
-        return state, action, reward, next_state, done
 
     def __del__(self):
         self.writer.close()

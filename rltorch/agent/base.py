@@ -42,7 +42,7 @@ class BaseAgent:
         optim.zero_grad()
         loss.backward(retain_graph=False)
         if grad_clip is not None:
-            for p in network:
+            for p in network.modules():
                 torch.nn.utils.clip_grad_norm_(p.parameters(), grad_clip)
         if network is not None:
             mean_grads = self.calc_mean_grads(network)

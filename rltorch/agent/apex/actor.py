@@ -6,6 +6,7 @@ from torch.utils.tensorboard import SummaryWriter
 from .base import ApexAgent
 from rltorch.memory import PrioritizedMemory
 from rltorch.q_function import DiscreteConvQNetwork
+from rltorch.agent import to_batch, hard_update
 
 
 class ApexActor(ApexAgent):
@@ -35,7 +36,7 @@ class ApexActor(ApexAgent):
         self.target_net = DiscreteConvQNetwork(
             self.env.observation_space.shape[0],
             self.env.action_space.n).to(self.device).eval()
-        self.target_net.load_state_dict(self.net.state_dict())
+        hard_update(self.target_net, self.net)
 
         self.memory = PrioritizedMemory(
             memory_size, self.env.observation_space.shape, (1,),
@@ -90,8 +91,8 @@ class ApexActor(ApexAgent):
             else:
                 masked_done = done
 
-            batch = self.to_batch(
-                state, action, reward, next_state, masked_done)
+            batch = to_batch(
+                state, action, reward, next_state, masked_done, self.device)
             with torch.no_grad():
                 curr_q = self.calc_current_q(*batch)
             target_q = self.calc_target_q(*batch)
