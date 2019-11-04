@@ -1,3 +1,5 @@
+dist/
+build/
 logs/
 __pycache__/
 .vscode/
