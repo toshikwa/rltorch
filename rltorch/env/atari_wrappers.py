@@ -4,7 +4,7 @@ from collections import deque
 
 import numpy as np
 import gym
-from gym import spaces
+from gym import spaces, wrappers
 import cv2
 cv2.ocl.setUseOpenCL(False)
 
@@ -323,4 +323,10 @@ def make_pytorch_env(env_id, episode_life=True, clip_rewards=True,
         env, episode_life, clip_rewards, frame_stack, scale)
     env._max_episode_steps = env.spec.tags.get(
         'wrapper_config.TimeLimit.max_episode_steps')
+    return env
+
+
+def wrap_monitor(env, log_dir):
+    env = wrappers.Monitor(
+        env, log_dir, video_callable=lambda x: True)
     return env
