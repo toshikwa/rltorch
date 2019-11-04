@@ -11,12 +11,12 @@ from setuptools import setup, Command
 
 
 NAME = 'rltorch'
-DESCRIPTION = 'Utilities for reinforcement learning in PyTorch.'
+DESCRIPTION = 'A simple framework for distributed reinforcement learning in PyTorch.'
 URL = 'https://github.com/ku2482/rltorch'
 EMAIL = 'watanabe.toshiki@outlook.jp'
 AUTHOR = 'Toshiki Watanabe'
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -88,7 +88,7 @@ setup(
     url=URL,
     packages=[
         'rltorch', 'rltorch.agent', 'rltorch.env', 'rltorch.memory',
-        'rltorch.q_function'],
+        'rltorch.network', 'rltorch.policy', 'rltorch.q_function'],
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     include_package_data=True,
