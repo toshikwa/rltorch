@@ -13,8 +13,8 @@ def actor_process(env_id, log_dir, shared_memory, shared_wights,
                   actor_id, cuda=True, seed=0):
 
     actor = SacDiscreteActor(
-        make_pytorch_env(env_id), log_dir, shared_memory, shared_wights,
-        actor_id, cuda=cuda, seed=seed)
+        make_pytorch_env(env_id, clip_rewards=False), log_dir, shared_memory,
+        shared_wights, actor_id, cuda=cuda, seed=seed)
     actor.run()
 
 
@@ -22,8 +22,8 @@ def learner_process(env_id, log_dir, shared_memory, shared_wights,
                     cuda=True, seed=0):
 
     actor = SacDiscreteLearner(
-        make_pytorch_env(env_id), log_dir, shared_memory, shared_wights,
-        cuda=cuda, seed=seed)
+        make_pytorch_env(env_id, clip_rewards=False), log_dir, shared_memory,
+        shared_wights, cuda=cuda, seed=seed)
     actor.run()
 
 
