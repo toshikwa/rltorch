@@ -14,9 +14,9 @@ class SacActor(SacAgent):
     space_size = 55
 
     def __init__(self, env, log_dir, shared_memory, shared_weights,
-                 actor_id, memory_size=1e4, hidden_units=[256, 256],
-                 gamma=0.99, multi_step=1, per=False, alpha=0.6, beta=0.4,
-                 beta_annealing=0.001, start_steps=10000,
+                 actor_id, num_actors=1, memory_size=1e4,
+                 hidden_units=[256, 256], gamma=0.99, multi_step=1, per=False,
+                 alpha=0.6, beta=0.4, beta_annealing=0.001, start_steps=10000,
                  log_interval=10, memory_save_interval=5,
                  model_load_interval=5, cuda=True, seed=0):
 

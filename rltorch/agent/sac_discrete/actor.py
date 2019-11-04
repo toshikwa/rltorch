@@ -14,10 +14,11 @@ class SacDiscreteActor(SacDiscreteAgent):
     space_size = 55
 
     def __init__(self, env, log_dir, shared_memory, shared_weights,
-                 actor_id, memory_size=1e4, gamma=0.99, multi_step=3,
-                 per=True, alpha=0.6, beta=0.4, beta_annealing=0.001,
-                 start_steps=10000, log_interval=10, memory_save_interval=5,
-                 model_load_interval=5, cuda=True, seed=0):
+                 actor_id, num_actors=1, memory_size=1e4, gamma=0.99,
+                 multi_step=3, per=True, alpha=0.6, beta=0.4,
+                 beta_annealing=0.001, start_steps=10000, log_interval=10,
+                 memory_save_interval=5, model_load_interval=5, cuda=True,
+                 seed=0):
 
         self.actor_id = actor_id
         self.env = env
