@@ -13,7 +13,8 @@ def run_learner(Learner, **kwargs):
     learner.run()
 
 
-def run_distributed(create_env_fn, Actor, Learner, num_actors, configs):
+def run_distributed(create_env_fn, log_dir, Actor, Learner, num_actors,
+                    configs):
     mp.freeze_support()
 
     shared_kwargs = {
@@ -23,6 +24,7 @@ def run_distributed(create_env_fn, Actor, Learner, num_actors, configs):
 
     learner_kwargs = dict(
         env=create_env_fn(),
+        log_dir=log_dir,
         Learner=Learner,
         **configs['common'],
         **configs['learner'],
@@ -33,6 +35,7 @@ def run_distributed(create_env_fn, Actor, Learner, num_actors, configs):
     for actor_id in range(num_actors):
         actor_kwargs = dict(
             env=create_env_fn(),
+            log_dir=log_dir,
             Actor=Actor,
             actor_id=actor_id,
             num_actors=num_actors,
@@ -40,7 +43,6 @@ def run_distributed(create_env_fn, Actor, Learner, num_actors, configs):
             **configs['actor'],
             **shared_kwargs,
         )
-
         processes.append(
             mp.Process(target=run_actor, kwargs=actor_kwargs))
 

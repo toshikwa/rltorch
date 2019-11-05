@@ -16,7 +16,7 @@ class SacDiscreteLearner(SacDiscreteAgent):
     def __init__(self, env, log_dir, shared_memory, shared_weights,
                  batch_size=64, lr=0.0003, memory_size=1e5, gamma=0.99,
                  tau=0.005, multi_step=3, per=True, alpha=0.6, beta=0.4,
-                 beta_annealing=0.001, clip_grad=5.0, update_per_steps=4,
+                 beta_annealing=0.001, grad_clip=5.0, update_per_steps=4,
                  start_steps=100, log_interval=1, memory_load_interval=5,
                  target_update_interval=1, model_save_interval=5,
                  eval_interval=1000, cuda=True, seed=0):
@@ -84,7 +84,7 @@ class SacDiscreteLearner(SacDiscreteAgent):
         self.batch_size = batch_size
         self.start_steps = start_steps
         self.gamma_n = gamma ** multi_step
-        self.clip_grad = clip_grad
+        self.grad_clip = grad_clip
         self.update_per_steps = update_per_steps
         self.log_interval = log_interval
         self.memory_load_interval = memory_load_interval
@@ -116,11 +116,11 @@ class SacDiscreteLearner(SacDiscreteAgent):
         entropy_loss = self.calc_entropy_loss(entropies, weights)
 
         update_params(
-            self.q1_optim, self.critic.Q1, q1_loss, self.clip_grad)
+            self.q1_optim, self.critic.Q1, q1_loss, self.grad_clip)
         update_params(
-            self.q2_optim, self.critic.Q2, q2_loss, self.clip_grad)
+            self.q2_optim, self.critic.Q2, q2_loss, self.grad_clip)
         update_params(
-            self.policy_optim, self.policy, policy_loss, self.clip_grad)
+            self.policy_optim, self.policy, policy_loss, self.grad_clip)
         self.update_params(
             self.alpha_optim, None, entropy_loss)
 

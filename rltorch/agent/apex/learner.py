@@ -7,15 +7,15 @@ from torch.utils.tensorboard import SummaryWriter
 from .base import ApexAgent
 from rltorch.q_function import DiscreteConvQNetwork
 from rltorch.memory import PrioritizedMemory
-from rltorch.agent import hard_update
+from rltorch.agent import hard_update, update_params
 
 
 class ApexLearner(ApexAgent):
 
     def __init__(self, env, log_dir, shared_memory, shared_weights,
                  batch_size=64, lr=0.00025/4, memory_size=4e5, gamma=0.99,
-                 multi_step=3, alpha=0.4, num_epochs=3, start_steps=1000,
-                 beta=0.6, beta_annealing=0.0, clip_grad=5.0, log_interval=10,
+                 multi_step=3, alpha=0.4, update_per_steps=3, start_steps=1000,
+                 beta=0.6, beta_annealing=0.0, grad_clip=5.0, log_interval=10,
                  memory_load_interval=5, model_save_interval=5,
                  target_update_interval=100, eval_interval=1000, cuda=True,
                  seed=0):
@@ -59,8 +59,8 @@ class ApexLearner(ApexAgent):
         self.batch_size = batch_size
         self.start_steps = start_steps
         self.gamma_n = gamma ** multi_step
-        self.num_epochs = num_epochs
-        self.clip_grad = clip_grad
+        self.update_per_steps = update_per_steps
+        self.grad_clip = grad_clip
         self.log_interval = log_interval
         self.memory_load_interval = memory_load_interval
         self.model_save_interval = model_save_interval
@@ -72,43 +72,30 @@ class ApexLearner(ApexAgent):
             self.load_memory()
 
         while True:
-            self.learn()
+            for _ in range(self.update_per_steps):
+                self.steps += 1
+                self.learn()
             self.interval()
 
     def learn(self):
-        total_loss = 0.
-        total_grads = 0.
-        total_mean_q = 0.
+        batch, indices, weights = \
+            self.memory.sample(self.batch_size)
 
-        for epoch in range(self.num_epochs):
-            self.steps += 1
+        curr_q = self.calc_current_q(*batch)
+        target_q = self.calc_target_q(*batch)
+        loss = torch.mean((curr_q - target_q).pow(2) * weights)
 
-            batch, indices, weights = \
-                self.memory.sample(self.batch_size)
+        update_params(
+            self.optim, self.net, loss, self.grad_clip)
 
-            curr_q = self.calc_current_q(*batch)
-            target_q = self.calc_target_q(*batch)
-            loss = torch.mean((curr_q - target_q).pow(2) * weights)
-
-            total_grads += self.update_params(
-                self.optim, self.net, loss, self.clip_grad)
-
-            errors = torch.abs(curr_q.detach() - target_q).cpu().numpy()
-            self.memory.update_priority(indices, errors)
-
-            total_loss += loss.detach().item()
-            total_mean_q += curr_q.detach().mean().item()
+        errors = torch.abs(curr_q.detach() - target_q).cpu().numpy()
+        self.memory.update_priority(indices, errors)
 
         if self.steps % self.log_interval == 0:
             self.writer.add_scalar(
-                "loss/learner", total_loss / self.num_epochs,
-                self.steps)
+                "loss/learner", loss.detach().item(), self.steps)
             self.writer.add_scalar(
-                "stats/grads_Q", total_grads / self.num_epochs,
-                self.steps)
-            self.writer.add_scalar(
-                "stats/mean_Q", total_mean_q / self.num_epochs,
-                self.steps)
+                "stats/mean_Q", curr_q.detach().mean().item(), self.steps)
 
     def interval(self):
         if self.steps % self.eval_interval == 0:

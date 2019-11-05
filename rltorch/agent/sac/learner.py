@@ -18,7 +18,7 @@ class SacLearner(SacAgent):
                  batch_size=256, lr=0.0003, hidden_units=[256, 256],
                  memory_size=1e6, gamma=0.99, tau=0.005, entropy_tuning=True,
                  ent_coef=0.2, multi_step=1, per=False, alpha=0.6, beta=0.4,
-                 beta_annealing=0.001, clip_grad=None, update_per_steps=1,
+                 beta_annealing=0.001, grad_clip=None, update_per_steps=1,
                  start_steps=10000, log_interval=10, memory_load_interval=5,
                  target_update_interval=1, model_save_interval=5,
                  eval_interval=1000, cuda=True, seed=0):
@@ -94,7 +94,7 @@ class SacLearner(SacAgent):
         self.start_steps = start_steps
         self.gamma_n = gamma ** multi_step
         self.entropy_tuning = entropy_tuning
-        self.clip_grad = clip_grad
+        self.grad_clip = grad_clip
         self.update_per_steps = update_per_steps
         self.log_interval = log_interval
         self.memory_load_interval = memory_load_interval
@@ -125,11 +125,11 @@ class SacLearner(SacAgent):
         policy_loss, entropies = self.calc_policy_loss(batch, weights)
 
         update_params(
-            self.q1_optim, self.critic.Q1, q1_loss, self.clip_grad)
+            self.q1_optim, self.critic.Q1, q1_loss, self.grad_clip)
         update_params(
-            self.q2_optim, self.critic.Q2, q2_loss, self.clip_grad)
+            self.q2_optim, self.critic.Q2, q2_loss, self.grad_clip)
         update_params(
-            self.policy_optim, self.policy, policy_loss, self.clip_grad)
+            self.policy_optim, self.policy, policy_loss, self.grad_clip)
 
         if self.entropy_tuning:
             entropy_loss = self.calc_entropy_loss(entropies, weights)
