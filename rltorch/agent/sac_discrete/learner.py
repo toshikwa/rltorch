@@ -17,7 +17,7 @@ class SacDiscreteLearner(SacDiscreteAgent):
                  batch_size=64, lr=0.0003, memory_size=1e5, gamma=0.99,
                  tau=0.005, multi_step=3, per=True, alpha=0.6, beta=0.4,
                  beta_annealing=0.001, grad_clip=5.0, update_per_steps=4,
-                 start_steps=100, log_interval=1, memory_load_interval=5,
+                 start_steps=1000, log_interval=1, memory_load_interval=5,
                  target_update_interval=1, model_save_interval=5,
                  eval_interval=1000, cuda=True, seed=0):
         self.env = env
@@ -73,6 +73,7 @@ class SacDiscreteLearner(SacDiscreteAgent):
         self.writer = SummaryWriter(log_dir=self.summary_dir)
 
         self.steps = 0
+        self.epochs = 0
         self.tau = tau
         self.per = per
         self.batch_size = batch_size
@@ -91,6 +92,7 @@ class SacDiscreteLearner(SacDiscreteAgent):
             self.load_memory()
 
         while True:
+            self.epochs += 1
             for _ in range(self.update_per_steps):
                 self.steps += 1
                 self.learn()
@@ -173,14 +175,14 @@ class SacDiscreteLearner(SacDiscreteAgent):
         return entropy_loss
 
     def interval(self):
-        if self.steps % self.eval_interval == 0:
+        if self.epochs % self.eval_interval == 0:
             self.evaluate()
-        if self.steps % self.memory_load_interval == 0:
+        if self.epochs % self.memory_load_interval == 0:
             self.load_memory()
-        if self.steps % self.model_save_interval == 0:
+        if self.epochs % self.model_save_interval == 0:
             self.save_weights()
             self.save_models()
-        if self.steps % self.target_update_interval == 0:
+        if self.epochs % self.target_update_interval == 0:
             soft_update(self.critic_target, self.critic, self.tau)
 
     def evaluate(self):

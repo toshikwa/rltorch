@@ -14,11 +14,11 @@ class ApexLearner(ApexAgent):
 
     def __init__(self, env, log_dir, shared_memory, shared_weights,
                  batch_size=64, lr=0.00025/4, memory_size=4e5, gamma=0.99,
-                 multi_step=3, alpha=0.4, update_per_steps=3, start_steps=1000,
-                 beta=0.6, beta_annealing=0.0, grad_clip=5.0, log_interval=10,
-                 memory_load_interval=5, model_save_interval=5,
-                 target_update_interval=100, eval_interval=1000, cuda=True,
-                 seed=0):
+                 multi_step=3, alpha=0.4, update_per_steps=32,
+                 start_steps=1000, beta=0.6, beta_annealing=0.0, grad_clip=5.0,
+                 log_interval=10, memory_load_interval=5,
+                 model_save_interval=5, target_update_interval=100,
+                 eval_interval=1000, cuda=True, seed=0):
         self.env = env
         torch.manual_seed(seed)
         np.random.seed(seed)
@@ -56,6 +56,7 @@ class ApexLearner(ApexAgent):
         self.writer = SummaryWriter(log_dir=self.summary_dir)
 
         self.steps = 0
+        self.epochs = 0
         self.batch_size = batch_size
         self.start_steps = start_steps
         self.gamma_n = gamma ** multi_step
@@ -72,6 +73,7 @@ class ApexLearner(ApexAgent):
             self.load_memory()
 
         while True:
+            self.epochs += 1
             for _ in range(self.update_per_steps):
                 self.steps += 1
                 self.learn()
@@ -98,14 +100,14 @@ class ApexLearner(ApexAgent):
                 "stats/mean_Q", curr_q.detach().mean().item(), self.steps)
 
     def interval(self):
-        if self.steps % self.eval_interval == 0:
+        if self.epochs % self.eval_interval == 0:
             self.evaluate()
-        if self.steps % self.memory_load_interval == 0:
+        if self.epochs % self.memory_load_interval == 0:
             self.load_memory()
-        if self.steps % self.model_save_interval == 0:
+        if self.epochs % self.model_save_interval == 0:
             self.save_weights()
             self.save_models()
-        if self.steps % self.target_update_interval == 0:
+        if self.epochs % self.target_update_interval == 0:
             hard_update(self.target_net, self.net)
 
     def evaluate(self):
