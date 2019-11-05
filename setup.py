@@ -7,7 +7,7 @@ import os
 import sys
 from shutil import rmtree
 
-from setuptools import setup, Command
+from setuptools import setup, Command, find_packages
 
 
 NAME = 'rltorch'
@@ -87,8 +87,8 @@ setup(
     python_requires=REQUIRES_PYTHON,
     url=URL,
     packages=[
-        'rltorch', 'rltorch.agent', 'rltorch.env', 'rltorch.memory',
-        'rltorch.network', 'rltorch.policy', 'rltorch.q_function'],
+        package for package in find_packages()
+        if package.startswith('rltorch')],
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     include_package_data=True,
