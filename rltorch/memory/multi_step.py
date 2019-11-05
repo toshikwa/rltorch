@@ -48,9 +48,9 @@ class MultiStepBuff:
 class MultiStepMemory(Memory):
 
     def __init__(self, capacity, state_shape, action_shape, device,
-                 gamma=0.99, multi_step=3, is_image=False):
+                 gamma=0.99, multi_step=3):
         super(MultiStepMemory, self).__init__(
-            capacity, state_shape, action_shape, device, is_image)
+            capacity, state_shape, action_shape, device)
 
         self.gamma = gamma
         self.multi_step = int(multi_step)

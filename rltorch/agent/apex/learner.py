@@ -43,8 +43,8 @@ class ApexLearner(ApexAgent):
 
         self.memory = PrioritizedMemory(
             memory_size, self.env.observation_space.shape, (1,),
-            self.device, gamma, multi_step, is_image=True,
-            alpha=alpha, beta=beta, beta_annealing=beta_annealing)
+            self.device, gamma, multi_step, alpha=alpha, beta=beta,
+            beta_annealing=beta_annealing)
 
         self.log_dir = log_dir
         self.model_dir = os.path.join(log_dir, 'model')

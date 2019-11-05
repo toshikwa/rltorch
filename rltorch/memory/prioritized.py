@@ -8,11 +8,10 @@ from .multi_step import MultiStepMemory
 class PrioritizedMemory(MultiStepMemory):
 
     def __init__(self, capacity, state_shape, action_shape, device,
-                 gamma=0.99, multi_step=3, is_image=False, alpha=0.6,
-                 beta=0.4, beta_annealing=0.001, epsilon=1e-4):
+                 gamma=0.99, multi_step=3, alpha=0.6, beta=0.4,
+                 beta_annealing=0.001, epsilon=1e-4):
         super(PrioritizedMemory, self).__init__(
-            capacity, state_shape, action_shape, device, gamma, multi_step,
-            is_image)
+            capacity, state_shape, action_shape, device, gamma, multi_step)
         self.alpha = alpha
         self.beta = beta
         self.beta_annealing = beta_annealing

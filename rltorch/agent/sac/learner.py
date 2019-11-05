@@ -66,17 +66,15 @@ class SacLearner(SacAgent):
             self.memory = PrioritizedMemory(
                 memory_size, self.env.observation_space.shape,
                 self.env.action_space.shape, self.device, gamma, multi_step,
-                is_image=False, alpha=alpha, beta=beta,
-                beta_annealing=beta_annealing)
+                alpha=alpha, beta=beta, beta_annealing=beta_annealing)
         elif multi_step == 1:
             self.memory = Memory(
                 memory_size, self.env.observation_space.shape,
-                self.env.action_space.shape, self.device, is_image=False)
+                self.env.action_space.shape, self.device)
         else:
             self.memory = MultiStepMemory(
                 memory_size, self.env.observation_space.shape,
-                self.env.action_space.shape, self.device, gamma, multi_step,
-                is_image=False)
+                self.env.action_space.shape, self.device, gamma, multi_step)
 
         self.log_dir = log_dir
         self.model_dir = os.path.join(log_dir, 'model')

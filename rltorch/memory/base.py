@@ -4,13 +4,12 @@ import torch
 
 class Memory:
 
-    def __init__(self, capacity, state_shape, action_shape, device,
-                 is_image=False):
+    def __init__(self, capacity, state_shape, action_shape, device):
         self.capacity = int(capacity)
         self.state_shape = state_shape
         self.action_shape = action_shape
         self.device = device
-        self.is_image = is_image
+        self.is_image = len(state_shape) == 3
         self.state_type = np.uint8 if self.is_image else np.float32
 
         self.reset()
