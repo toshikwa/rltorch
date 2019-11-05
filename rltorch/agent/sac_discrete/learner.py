@@ -1,4 +1,5 @@
 import os
+from time import time
 import numpy as np
 import torch
 from torch.optim import Adam
@@ -91,12 +92,13 @@ class SacDiscreteLearner(SacDiscreteAgent):
         while len(self.memory) <= self.start_steps:
             self.load_memory()
 
+        self.time = time()
         while True:
             self.epochs += 1
             for _ in range(self.update_per_steps):
                 self.steps += 1
                 self.learn()
-            self.interval()
+                self.interval()
 
     def learn(self):
         if self.per:
@@ -175,14 +177,14 @@ class SacDiscreteLearner(SacDiscreteAgent):
         return entropy_loss
 
     def interval(self):
-        if self.epochs % self.eval_interval == 0:
+        if self.steps % self.eval_interval == 0:
             self.evaluate()
-        if self.epochs % self.memory_load_interval == 0:
+        if self.steps % self.memory_load_interval == 0:
             self.load_memory()
-        if self.epochs % self.model_save_interval == 0:
+        if self.steps % self.model_save_interval == 0:
             self.save_weights()
             self.save_models()
-        if self.epochs % self.target_update_interval == 0:
+        if self.steps % self.target_update_interval == 0:
             soft_update(self.critic_target, self.critic, self.tau)
 
     def evaluate(self):
@@ -204,9 +206,12 @@ class SacDiscreteLearner(SacDiscreteAgent):
 
         self.writer.add_scalar(
             'reward/test', mean_return, self.steps)
+        now = time()
         print('Learner  '
-              f'Num steps: {self.steps:<5} \t '
-              f'reward: {mean_return:<5.1f}')
+              f'Num steps: {self.steps:<5}  '
+              f'reward: {mean_return:<5.1f}  '
+              f'time: {now - self.time:3.3f}')
+        self.time = now
 
     def save_models(self):
         self.critic.save(

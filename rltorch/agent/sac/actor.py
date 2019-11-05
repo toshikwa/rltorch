@@ -1,4 +1,5 @@
 import os
+from time import time
 import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
@@ -11,7 +12,7 @@ from rltorch.agent import to_batch, hard_update
 
 
 class SacActor(SacAgent):
-    space_size = 55
+    space_size = 65
 
     def __init__(self, env, log_dir, shared_memory, shared_weights,
                  actor_id, num_actors=1, memory_size=1e4,
@@ -78,6 +79,7 @@ class SacActor(SacAgent):
             load = self.load_weights()
 
     def run(self):
+        self.time = time()
         while True:
             self.episodes += 1
             self.act_episode()
@@ -123,12 +125,14 @@ class SacActor(SacAgent):
         if self.episodes % self.log_interval == 0:
             self.writer.add_scalar(
                 'reward/train', episode_reward, self.steps)
-
+        now = time()
         print(' '*self.space_size,
-              f'Actor {self.actor_id:<2} \t'
-              f'episode: {self.episodes:<4} \t'
-              f'episode steps: {episode_steps:<4} \t'
-              f'reward: {episode_reward:<5.1f}')
+              f'Actor {self.actor_id:<2}   '
+              f'episode: {self.episodes:<4}   '
+              f'episode steps: {episode_steps:<4}   '
+              f'reward: {episode_reward:<5.1f}   '
+              f'time: {now - self.time:3.3f}')
+        self.time = now
 
     def interval(self):
         if self.episodes % self.model_load_interval == 0:
