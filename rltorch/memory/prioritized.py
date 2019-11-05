@@ -56,7 +56,7 @@ class PrioritizedMemory(MultiStepMemory):
 
     def reset(self):
         super(PrioritizedMemory, self).reset()
-        self.priorities = np.zeros(
+        self.priorities = np.empty(
             (self.capacity, 1), dtype=np.float32)
 
     def get(self):

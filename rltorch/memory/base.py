@@ -62,15 +62,15 @@ class Memory:
         self._n = 0
         self._p = 0
 
-        self.states = np.zeros(
+        self.states = np.empty(
             (self.capacity, *self.state_shape), dtype=self.state_type)
-        self.actions = np.zeros(
+        self.actions = np.empty(
             (self.capacity, *self.action_shape), dtype=np.float32)
-        self.rewards = np.zeros(
+        self.rewards = np.empty(
             (self.capacity, 1), dtype=np.float32)
-        self.next_states = np.zeros(
+        self.next_states = np.empty(
             (self.capacity, *self.state_shape), dtype=self.state_type)
-        self.dones = np.zeros(
+        self.dones = np.empty(
             (self.capacity, 1), dtype=np.float32)
 
     def get(self):

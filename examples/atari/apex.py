@@ -43,7 +43,7 @@ def run():
             'log_interval': 10,
             'memory_load_interval': 5,
             'model_save_interval': 5,
-            'eval_interval': 1000,
+            'eval_interval': 100,
         }
     }
 

@@ -1,4 +1,7 @@
 import torch
+import gc
+
+gc.enable()
 
 
 class BaseAgent:
@@ -60,6 +63,8 @@ class BaseAgent:
         while not self.shared_memory.empty():
             batch = self.shared_memory.get()
             self.memory.load_memory(batch)
+            del batch
+        gc.collect()
 
     def save_memory(self):
         self.shared_memory.put(self.memory.get())
