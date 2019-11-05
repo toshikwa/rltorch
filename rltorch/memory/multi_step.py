@@ -54,15 +54,19 @@ class MultiStepMemory(Memory):
 
         self.gamma = gamma
         self.multi_step = int(multi_step)
-        self.buff = MultiStepBuff(maxlen=self.multi_step)
+        if self.multi_step != 1:
+            self.buff = MultiStepBuff(maxlen=self.multi_step)
 
     def append(self, state, action, reward, next_state, done,
                episode_done=False):
-        self.buff.append(state, action, reward)
+        if self.multi_step != 1:
+            self.buff.append(state, action, reward)
 
-        if len(self.buff) == self.multi_step:
-            state, action, reward = self.buff.get(self.gamma)
+            if len(self.buff) == self.multi_step:
+                state, action, reward = self.buff.get(self.gamma)
+                self._append(state, action, reward, next_state, done)
+
+            if episode_done or done:
+                self.buff.reset()
+        else:
             self._append(state, action, reward, next_state, done)
-
-        if episode_done or done:
-            self.buff.reset()

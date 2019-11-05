@@ -4,7 +4,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from .base import SacAgent
-from rltorch.memory import Memory, MultiStepMemory, PrioritizedMemory
+from rltorch.memory import MultiStepMemory, PrioritizedMemory
 from rltorch.policy import LinearGaussianPolicy
 from rltorch.q_function import TwinnedContinuousLinearQNetwork
 from rltorch.agent import to_batch, hard_update
@@ -51,10 +51,6 @@ class SacActor(SacAgent):
                 memory_size, self.env.observation_space.shape,
                 self.env.action_space.shape, self.device, gamma, multi_step,
                 alpha=alpha, beta=beta, beta_annealing=beta_annealing)
-        elif multi_step == 1:
-            self.memory = Memory(
-                memory_size, self.env.observation_space.shape,
-                self.env.action_space.shape, self.device)
         else:
             self.memory = MultiStepMemory(
                 memory_size, self.env.observation_space.shape,
@@ -117,9 +113,6 @@ class SacActor(SacAgent):
                 self.memory.append(
                     state, action, reward, next_state, masked_done, error,
                     episode_done=done)
-            elif self.multi_step == 1:
-                self.memory.append(
-                    state, action, reward, next_state, masked_done)
             else:
                 self.memory.append(
                     state, action, reward, next_state, masked_done,

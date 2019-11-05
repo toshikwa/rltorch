@@ -6,7 +6,7 @@ from torch.optim import Adam
 from torch.utils.tensorboard import SummaryWriter
 
 from .base import SacAgent
-from rltorch.memory import Memory, MultiStepMemory, PrioritizedMemory
+from rltorch.memory import MultiStepMemory, PrioritizedMemory
 from rltorch.policy import LinearGaussianPolicy
 from rltorch.q_function import TwinnedContinuousLinearQNetwork
 from rltorch.agent import soft_update, hard_update, update_params
@@ -67,10 +67,6 @@ class SacLearner(SacAgent):
                 memory_size, self.env.observation_space.shape,
                 self.env.action_space.shape, self.device, gamma, multi_step,
                 alpha=alpha, beta=beta, beta_annealing=beta_annealing)
-        elif multi_step == 1:
-            self.memory = Memory(
-                memory_size, self.env.observation_space.shape,
-                self.env.action_space.shape, self.device)
         else:
             self.memory = MultiStepMemory(
                 memory_size, self.env.observation_space.shape,

@@ -19,15 +19,19 @@ class PrioritizedMemory(MultiStepMemory):
 
     def append(self, state, action, reward, next_state, done, error,
                episode_done=False):
-        self.buff.append(state, action, reward)
+        if self.multi_step != 1:
+            self.buff.append(state, action, reward)
 
-        if len(self.buff) == self.multi_step:
-            state, action, reward = self.buff.get(self.gamma)
+            if len(self.buff) == self.multi_step:
+                state, action, reward = self.buff.get(self.gamma)
+                self.priorities[self._p] = self.calc_priority(error)
+                self._append(state, action, reward, next_state, done)
+
+            if episode_done or done:
+                self.buff.reset()
+        else:
             self.priorities[self._p] = self.calc_priority(error)
             self._append(state, action, reward, next_state, done)
-
-        if episode_done or done:
-            self.buff.reset()
 
     def update_priority(self, indices, errors):
         self.priorities[indices] = np.reshape(

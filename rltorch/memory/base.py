@@ -14,7 +14,8 @@ class Memory:
 
         self.reset()
 
-    def append(self, state, action, reward, next_state, done):
+    def append(self, state, action, reward, next_state, done,
+               episode_done=None):
         self._append(state, action, reward, next_state, done)
 
     def _append(self, state, action, reward, next_state, done):
