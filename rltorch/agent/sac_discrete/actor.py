@@ -5,7 +5,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from .base import SacDiscreteAgent
-from rltorch.memory import MultiStepMemory, PrioritizedMemory
+from rltorch.memory import DummyMultiStepMemory, DummyPrioritizedMemory
 from rltorch.policy import ConvCategoricalPolicy
 from rltorch.q_function import TwinedDiscreteConvQNetwork
 from rltorch.agent import to_batch, hard_update
@@ -45,12 +45,12 @@ class SacDiscreteActor(SacDiscreteAgent):
         hard_update(self.critic_target, self.critic)
 
         if per:
-            self.memory = PrioritizedMemory(
+            self.memory = DummyPrioritizedMemory(
                 memory_size, self.env.observation_space.shape,
                 (1,), self.device, gamma, multi_step,
                 alpha=alpha, beta=beta, beta_annealing=beta_annealing)
         else:
-            self.memory = MultiStepMemory(
+            self.memory = DummyMultiStepMemory(
                 memory_size, self.env.observation_space.shape,
                 (1,), self.device, gamma, multi_step)
 

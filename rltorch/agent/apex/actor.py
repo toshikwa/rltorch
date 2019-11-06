@@ -5,7 +5,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from .base import ApexAgent
-from rltorch.memory import PrioritizedMemory
+from rltorch.memory import DummyPrioritizedMemory
 from rltorch.q_function import DiscreteConvQNetwork
 from rltorch.agent import to_batch, hard_update
 
@@ -39,7 +39,7 @@ class ApexActor(ApexAgent):
             self.env.action_space.n).to(self.device).eval()
         hard_update(self.target_net, self.net)
 
-        self.memory = PrioritizedMemory(
+        self.memory = DummyPrioritizedMemory(
             memory_size, self.env.observation_space.shape, (1,),
             self.device, gamma, multi_step, alpha=alpha, beta=beta,
             beta_annealing=beta_annealing)
