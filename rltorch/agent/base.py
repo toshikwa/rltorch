@@ -60,7 +60,7 @@ class BaseAgent:
     def load_memory(self):
         while not self.shared_memory.empty():
             batch = self.shared_memory.get()
-            self.memory.load_memory(batch)
+            self.memory.load(batch)
 
     def save_memory(self):
         self.shared_memory.put(self.memory.get())

@@ -79,7 +79,7 @@ class Memory:
             self.states[valid], self.actions[valid], self.rewards[valid],
             self.next_states[valid], self.dones[valid])
 
-    def load_memory(self, batch):
+    def load(self, batch):
         num_data = len(batch[0])
 
         if self._p + num_data <= self.capacity:

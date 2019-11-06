@@ -191,7 +191,7 @@ class WarpFramePyTorch(gym.ObservationWrapper):
         return frame[None, :, :]
 
 
-class FrameStackPyTorch(gym.Wrapper):
+class ScaledFrameStackPyTorch(gym.Wrapper):
     def __init__(self, env, n_frames):
         """Stack n_frames last frames.
         Returns lazy array, which is much more memory efficient.
@@ -201,20 +201,15 @@ class FrameStackPyTorch(gym.Wrapper):
         :param env: (Gym Environment) the environment
         :param n_frames: (int) the number of frames to stack
         """
+        assert env.observation_space.dtype == np.uint8
+
         gym.Wrapper.__init__(self, env)
         self.n_frames = n_frames
         self.frames = deque([], maxlen=n_frames)
         shp = env.observation_space.shape
 
-        if self.observation_space == np.uint8:
-            low = 0
-            high = 255
-        else:
-            low = 0.0
-            high = 1.0
-
         self.observation_space = spaces.Box(
-            low=low, high=high, shape=(shp[0] * n_frames, shp[1], shp[2]),
+            low=0.0, high=1.0, shape=(shp[0] * n_frames, shp[1], shp[2]),
             dtype=env.observation_space.dtype)
 
     def reset(self):
@@ -230,7 +225,7 @@ class FrameStackPyTorch(gym.Wrapper):
 
     def _get_ob(self):
         assert len(self.frames) == self.n_frames
-        return LazyFrames(list(self.frames))
+        return ScaledLazyFrames(list(self.frames))
 
 
 class ScaledFloatFrame(gym.ObservationWrapper):
@@ -246,7 +241,7 @@ class ScaledFloatFrame(gym.ObservationWrapper):
         return np.array(observation).astype(np.float32) / 255.0
 
 
-class LazyFrames(object):
+class ScaledLazyFrames(object):
     def __init__(self, frames):
         """
         This object ensures that common frames between the observations are
@@ -257,13 +252,10 @@ class LazyFrames(object):
         :param frames: ([int] or [float]) environment frames
         """
         self._frames = frames
-        self._out = None
 
     def _force(self):
-        if self._out is None:
-            self._out = np.concatenate(self._frames, axis=0)
-            self._frames = None
-        return self._out
+        return np.concatenate(
+            np.array(self._frames, dtype=np.float32)/255.0, axis=0)
 
     def __array__(self, dtype=None):
         out = self._force()
@@ -309,10 +301,10 @@ def wrap_deepmind_pytorch(env, episode_life=True, clip_rewards=True,
     env = WarpFramePyTorch(env)
     if clip_rewards:
         env = ClipRewardEnv(env)
-    if scale:
-        env = ScaledFloatFrame(env)
     if frame_stack:
-        env = FrameStackPyTorch(env, 4)
+        env = ScaledFrameStackPyTorch(env, 4)
+    elif scale:
+        env = ScaledFloatFrame(env)
     return env
 
 

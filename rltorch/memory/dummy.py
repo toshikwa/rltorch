@@ -56,16 +56,19 @@ class DummyMemory(dict):
         return self._sample(indices, batch_size)
 
     def _sample(self, indices, batch_size):
+        bias = -self._p if self._n == self.capacity else 0
+
         states = np.empty(
             (batch_size, *self.state_shape), dtype=np.float32)
         next_states = np.empty(
             (batch_size, *self.state_shape), dtype=np.float32)
 
         for i, index in enumerate(indices):
+            _index = np.mod(index+bias, self.capacity)
             states[i, ...] = np.array(
-                self['state'][index], dtype=np.float32)
+                self['state'][_index], dtype=np.float32)
             next_states[i, ...] = np.array(
-                self['next_state'][index], dtype=np.float32)
+                self['next_state'][_index], dtype=np.float32)
 
         states = torch.FloatTensor(states).to(self.device)
         next_states = torch.FloatTensor(next_states).to(self.device)
@@ -185,12 +188,7 @@ class DummyPrioritizedMemory(DummyMultiStepMemory):
             self['priority'][:self._n, 0], batch_size)
         indices = list(sampler)
 
-        if self._n == self.capacity:
-            _indices = np.mod(indices-self._p, self.capacity)
-        else:
-            _indices = indices
-        batch = self._sample(_indices, batch_size)
-
+        batch = self._sample(indices, batch_size)
         priorities = np.array(self['priority'][indices], dtype=np.float32)
         priorities = priorities / np.sum(self['priority'][:self._n])
 
