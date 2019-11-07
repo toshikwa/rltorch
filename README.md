@@ -9,11 +9,6 @@ cd rltorch
 pip install -e .
 ```
 
-You can also install using PyPI.
-```
-pip install rltorch
-```
-
 ## Examples
 ### Ape-X
 You can implement Ape-X[[1]](#references) agent like this example [here](https://github.com/ku2482/rltorch/blob/master/examples/atari/apex.py).
