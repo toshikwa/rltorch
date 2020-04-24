@@ -254,8 +254,7 @@ class ScaledLazyFrames(object):
         self._frames = frames
 
     def _force(self):
-        return np.concatenate(
-            np.array(self._frames, dtype=np.float32)/255.0, axis=0)
+        return np.concatenate(np.array(self._frames, dtype=np.uint8), axis=0)
 
     def __array__(self, dtype=None):
         out = self._force()

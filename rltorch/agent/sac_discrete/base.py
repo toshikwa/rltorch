@@ -27,13 +27,15 @@ class SacDiscreteAgent(BaseAgent):
         return action
 
     def explore(self, state):
-        state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        state = \
+            torch.ByteTensor(state[None, ...]).to(self.device).float() / 255.0
         with torch.no_grad():
             action, _, _, _ = self.policy.sample(state)
         return action.item()
 
     def exploit(self, state):
-        state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        state = \
+            torch.ByteTensor(state[None, ...]).to(self.device).float() / 255.0
         with torch.no_grad():
             _, _, _, action = self.policy.sample(state)
         return action.item()

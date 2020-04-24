@@ -19,12 +19,8 @@ class Memory:
         self._append(state, action, reward, next_state, done)
 
     def _append(self, state, action, reward, next_state, done):
-        state = np.array(state, dtype=np.float32)
-        next_state = np.array(next_state, dtype=np.float32)
-
-        if self.is_image:
-            state = (state*255).astype(np.uint8)
-            next_state = (next_state*255).astype(np.uint8)
+        state = np.array(state, dtype=self.state_type)
+        next_state = np.array(next_state, dtype=self.state_type)
 
         self.states[self._p] = state
         self.actions[self._p] = action
@@ -41,16 +37,20 @@ class Memory:
 
     def _sample(self, indices):
         if self.is_image:
-            states = self.states[indices].astype(np.float32) / 255.
-            next_states = self.next_states[indices].astype(np.float32) / 255.
+            states = self.states[indices].astype(np.uint8)
+            next_states = self.next_states[indices].astype(np.uint8)
+            states = \
+                torch.ByteTensor(states).to(self.device).float() / 255.
+            next_states = \
+                torch.ByteTensor(next_states).to(self.device).float() / 255.
         else:
             states = self.states[indices]
             next_states = self.next_states[indices]
+            states = torch.FloatTensor(states).to(self.device)
+            next_states = torch.FloatTensor(next_states).to(self.device)
 
-        states = torch.FloatTensor(states).to(self.device)
         actions = torch.FloatTensor(self.actions[indices]).to(self.device)
         rewards = torch.FloatTensor(self.rewards[indices]).to(self.device)
-        next_states = torch.FloatTensor(next_states).to(self.device)
         dones = torch.FloatTensor(self.dones[indices]).to(self.device)
 
         return states, actions, rewards, next_states, dones

@@ -59,19 +59,21 @@ class DummyMemory(dict):
         bias = -self._p if self._n == self.capacity else 0
 
         states = np.empty(
-            (batch_size, *self.state_shape), dtype=np.float32)
+            (batch_size, *self.state_shape), dtype=np.uint8)
         next_states = np.empty(
-            (batch_size, *self.state_shape), dtype=np.float32)
+            (batch_size, *self.state_shape), dtype=np.uint8)
 
         for i, index in enumerate(indices):
             _index = np.mod(index+bias, self.capacity)
-            states[i, ...] = np.array(
-                self['state'][_index], dtype=np.float32)
-            next_states[i, ...] = np.array(
-                self['next_state'][_index], dtype=np.float32)
+            states[i, ...] = \
+                np.array(self['state'][_index], dtype=np.uint8)
+            next_states[i, ...] = \
+                np.array(self['next_state'][_index], dtype=np.uint8)
 
-        states = torch.FloatTensor(states).to(self.device)
-        next_states = torch.FloatTensor(next_states).to(self.device)
+        states = \
+            torch.ByteTensor(states).to(self.device).float() / 255.
+        next_states = \
+            torch.ByteTensor(next_states).to(self.device).float() / 255.
         actions = torch.FloatTensor(self['action'][indices]).to(self.device)
         rewards = torch.FloatTensor(self['reward'][indices]).to(self.device)
         dones = torch.FloatTensor(self['done'][indices]).to(self.device)

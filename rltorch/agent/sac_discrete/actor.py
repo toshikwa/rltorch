@@ -76,7 +76,7 @@ class SacDiscreteActor(SacDiscreteAgent):
             load = self.load_weights()
 
     def run(self):
-        self.time = now()
+        self.time = time()
         while True:
             self.episodes += 1
             self.act_episode()
