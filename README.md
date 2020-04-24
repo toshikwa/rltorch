@@ -1,5 +1,9 @@
-# rltorch(WIP)
+# rltorch (This repo is no longer maintained.)
+
 rltorch provides a simple framework for reinforcement learning in PyTorch. You can easily implement distributed RL algorithms.
+
+**Update**
+- 2020.04.24 : Speed up replay memory. ([commit](https://github.com/ku2482/rltorch/commit/145cf5072c088d8b64f51069e931a68143d289ad))
 
 ## Installation
 Install rltorch from source.
@@ -34,7 +38,7 @@ python examples/mujoco/sac.py \
 You can implement SAC-Discrete[[4]](#references) agent like this example [here](https://github.com/ku2482/rltorch/blob/master/examples/atari/sac_discrete.py).
 
 ```
-python examples/mujoco/sac.py \
+python examples/atari/sac_discrete.py \
 [--env_id str(default MsPacmanNoFrameskip-v4)] \
 [--num_actors int(default 4)] \
 [--cuda (optional)] [--seed int(default 0)]
